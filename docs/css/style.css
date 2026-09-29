@@ -1,36 +1,41 @@
 /* ================================================================
-   KARELOVA STUDIO · DESIGN SYSTEM 2026 · "Neo-Aura"
-   Palette: electric violet #a855f7 + fuchsia #d946ef
+   KARELOVA STUDIO · DESIGN SYSTEM 2026
+   Palette: AlxTrade Deep Dark (#0a0e17) + Cyan/Teal Brand (#09bbc6 / #00b4b1)
+   + Soft Blue/Purple Accent (#5073f0 / #3d5ad4)
    ================================================================ */
 
 /* ── TOKENS ─────────────────────────────────────────────────── */
 :root {
-  /* Core */
-  --bg:    #080613;
-  --panel: #100d1e;
-  --line:  #241c3a;
+  /* Core background & surface (AlxTrade dark theme) */
+  --bg:    #090d16;
+  --panel: #0f1624;
+  --line:  #1b253b;
 
-  /* Accents */
-  --accent:      #a855f7;
-  --accent-2:    #d946ef;
-  --accent-soft: rgba(168,85,247,.16);
-  --ac2:         #e879f9;
-  --ai:          #0d0920;    /* text on accent bg */
+  /* Brand Accents (Karelova Logo Colors: Cyan #09bbc6 & Teal #00b4b1) */
+  --accent:      #09bbc6;
+  --accent-2:    #00b4b1;
+  --accent-soft: rgba(9,187,198,.16);
+  --ac2:         #4ee3ec;
+  --ai:          #031318;    /* dark text on cyan button */
+
+  /* AlxTrade UI accents: blue-violet secondary */
+  --btn-blue:    linear-gradient(135deg, #4f75f8 0%, #3a5ce0 100%);
+  --btn-glow:    0 8px 24px -8px rgba(79,117,248,.65);
 
   /* Service categories */
-  --mi:  rgba(129,140,248,.16);  /* Podology · indigo */
-  --mi2: #818cf8;
-  --pe:  rgba(244,114,182,.18);  /* Sugaring · pink */
-  --pe2: #f472b4;
+  --mi:  rgba(9,187,198,.14);   /* Podology · cyan/teal brand */
+  --mi2: #09bbc6;
+  --pe:  rgba(255,154,118,.14); /* Sugaring · soft coral/peach */
+  --pe2: #ff9a76;
 
-  /* Text */
-  --tx: #ede9ff;
-  --mu: #7c6fa0;
+  /* Text colors */
+  --tx: #e8ecf4;
+  --mu: #7e8ba6;
 
-  /* Surfaces */
-  --cd:  linear-gradient(160deg, rgba(168,85,247,.07), rgba(168,85,247,.02));
-  --bo:  rgba(168,85,247,.2);
-  --sh:  0 16px 40px -18px rgba(0,0,0,.9);
+  /* Glass Surfaces (AlxTrade style cards) */
+  --cd:  linear-gradient(160deg, rgba(20,30,48,.6), rgba(12,18,30,.4));
+  --bo:  rgba(65,85,125,.24);
+  --sh:  0 16px 40px -18px rgba(0,0,0,.85);
   --hl:  inset 0 1px 0 rgba(255,255,255,.07);
 
   /* Radii */
@@ -38,7 +43,7 @@
   --r-sm: 12px;
   --r-md: 16px;
   --r-lg: 20px;
-  --r-xl: 26px;
+  --r-xl: 24px;
 
   color-scheme: dark;
 }
@@ -70,13 +75,14 @@ input[type=time], input[type=number], .li small {
 }
 
 h1 {
-  font-size: 28px;
+  font-size: 26px;
   font-weight: 700;
   letter-spacing: -.03em;
   margin: 0 0 18px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
 h3 {
@@ -98,21 +104,21 @@ h3 {
   inset: 0;
   z-index: -1;
   background:
-    radial-gradient(ellipse 680px 500px at 110% -8%,
-      rgba(168,85,247,.22), transparent 70%),
-    radial-gradient(ellipse 480px 580px at -8% 62%,
-      rgba(129,140,248,.14), transparent 70%),
-    radial-gradient(ellipse 380px 320px at 55% 108%,
-      rgba(217,70,239,.11), transparent 70%),
+    radial-gradient(ellipse 650px 480px at 105% -5%,
+      rgba(9,187,198,.18), transparent 70%),
+    radial-gradient(ellipse 500px 500px at -10% 55%,
+      rgba(79,117,248,.12), transparent 70%),
+    radial-gradient(ellipse 400px 350px at 50% 110%,
+      rgba(0,180,177,.10), transparent 70%),
     var(--bg);
 }
 
-/* Noise texture */
+/* Subtle noise texture */
 .bg::after {
   content: '';
   position: absolute;
   inset: 0;
-  opacity: .035;
+  opacity: .03;
   background-image:
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");
   pointer-events: none;
@@ -133,7 +139,16 @@ h3 {
 .row { display: flex; gap: 8px; align-items: flex-end; }
 .row > * { flex: 1; min-width: 0; }
 
-/* ── GLASS CARD ──────────────────────────────────────────────── */
+/* Header action buttons row: vertical / horizontal layout guarantee */
+h1 > span {
+  display: inline-flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  gap: 8px !important;
+  flex-shrink: 0 !important;
+}
+
+/* ── GLASS CARD (AlxTrade Style) ─────────────────────────────── */
 .cd {
   background: var(--cd);
   backdrop-filter: blur(24px) saturate(1.5);
@@ -149,14 +164,14 @@ h3 {
 .bt {
   border: 0;
   background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-  color: #fff;
+  color: var(--ai);
   border-radius: var(--r-md);
   padding: 15px 20px;
-  font: 600 15px/1 'Space Grotesk', Inter, sans-serif;
+  font: 700 15px/1 'Space Grotesk', Inter, sans-serif;
   cursor: pointer;
   box-shadow:
-    0 8px 26px -8px rgba(168,85,247,.65),
-    inset 0 1px 0 rgba(255,255,255,.22);
+    0 8px 24px -8px rgba(9,187,198,.7),
+    inset 0 1px 0 rgba(255,255,255,.3);
   transition:
     transform  .2s cubic-bezier(.3,1.6,.5,1),
     box-shadow .2s;
@@ -170,11 +185,11 @@ h3 {
 }
 .bt:active {
   transform: scale(.95);
-  box-shadow: 0 4px 12px -4px rgba(168,85,247,.4);
+  box-shadow: 0 4px 12px -4px rgba(9,187,198,.4);
 }
 
 .bt.gh {
-  background: rgba(255,255,255,.055);
+  background: rgba(255,255,255,.05);
   color: var(--ac2);
   border: 1px solid var(--bo);
   box-shadow: var(--sh), var(--hl);
@@ -186,7 +201,7 @@ h3 {
 /* Icon-only button */
 .ib {
   border: 1px solid var(--bo);
-  background: rgba(255,255,255,.055);
+  background: rgba(255,255,255,.05);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   width: 42px;
@@ -194,17 +209,18 @@ h3 {
   border-radius: 50%;
   color: var(--tx);
   cursor: pointer;
-  display: grid;
-  place-items: center;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
   padding: 0;
-  flex: none;
+  flex: 0 0 42px !important;
   transition:
     transform  .2s cubic-bezier(.3,1.6,.5,1),
     background .2s,
     border-color .2s;
 }
 .ib:active  { transform: scale(.87); }
-.ib:hover   { background: rgba(168,85,247,.12); border-color: rgba(168,85,247,.4); }
+.ib:hover   { background: rgba(9,187,198,.12); border-color: rgba(9,187,198,.4); }
 
 /* ── FORM ELEMENTS ───────────────────────────────────────────── */
 label {
@@ -220,9 +236,9 @@ input, select, textarea {
   width: 100%;
   font: 15px/1.4 Inter, system-ui, sans-serif;
   color: var(--tx);
-  background: rgba(255,255,255,.04);
+  background: rgba(10,16,28,.6);
   border: 1px solid var(--bo);
-  box-shadow: inset 0 2px 8px rgba(0,0,0,.12);
+  box-shadow: inset 0 2px 8px rgba(0,0,0,.15);
   border-radius: var(--r-sm);
   padding: 14px 16px;
   outline: 0;
@@ -232,16 +248,16 @@ input, select, textarea {
 }
 input:focus, select:focus, textarea:focus {
   border-color: var(--accent);
-  background: rgba(168,85,247,.06);
+  background: rgba(9,187,198,.06);
   box-shadow:
-    0 0 0 4px rgba(168,85,247,.16),
+    0 0 0 4px rgba(9,187,198,.16),
     inset 0 2px 8px rgba(0,0,0,.08);
 }
 textarea { min-height: 84px; resize: vertical; }
-select option { background: #100d1e; color: var(--tx); }
+select option { background: #0e1524; color: var(--tx); }
 input[type=time], input[type=date] { color-scheme: dark; }
 input[type=time]::-webkit-calendar-picker-indicator,
-input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
+input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
 
 /* ── CALENDAR ────────────────────────────────────────────────── */
 .cal {
@@ -268,15 +284,16 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   place-items: center;
   transition: transform .2s cubic-bezier(.3,1.6,.5,1), background .2s;
 }
-.dy:hover   { background: rgba(168,85,247,.12); }
+.dy:hover   { background: rgba(9,187,198,.12); }
 .dy:active  { transform: scale(.84); }
 .dy.today   { color: var(--ac2); font-weight: 700; }
 .dy.sel {
   background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: #fff;
+  color: var(--ai);
+  font-weight: 700;
   box-shadow:
-    0 6px 22px -6px rgba(168,85,247,.8),
-    inset 0 1px 0 rgba(255,255,255,.3);
+    0 6px 20px -6px rgba(9,187,198,.8),
+    inset 0 1px 0 rgba(255,255,255,.4);
 }
 .dy u {
   position: absolute;
@@ -284,10 +301,10 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   width: 4px; height: 4px;
   margin-left: -2px;
   border-radius: 9px;
-  background: var(--mi2);
+  background: var(--ac2);
   text-decoration: none;
 }
-.dy.sel u { background: rgba(255,255,255,.75); }
+.dy.sel u { background: var(--ai); }
 
 /* ── TIME SLOTS ──────────────────────────────────────────────── */
 .slot {
@@ -295,18 +312,18 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   gap: 14px;
   align-items: center;
   padding: 14px 18px;
-  border: 1px dashed rgba(168,85,247,.22);
+  border: 1px dashed rgba(65,85,125,.35);
   border-radius: var(--r-lg);
   margin-bottom: 8px;
   cursor: pointer;
   color: var(--mu);
-  background: rgba(168,85,247,.03);
+  background: rgba(9,187,198,.03);
   transition:
     border-color .2s,
     background   .2s,
     transform    .2s cubic-bezier(.3,1.6,.5,1);
 }
-.slot:hover  { border-color: rgba(168,85,247,.42); background: rgba(168,85,247,.07); }
+.slot:hover  { border-color: rgba(9,187,198,.45); background: rgba(9,187,198,.07); }
 .slot:active { transform: scale(.98); }
 .slot span   { font-weight: 600; color: var(--tx); font-size: 14px; }
 .slot em     { font-style: normal; font-size: 14px; }
@@ -328,12 +345,12 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
 }
 .ap:active { transform: scale(.98); }
 .ap.mi {
-  background: linear-gradient(150deg, var(--mi), rgba(129,140,248,.03));
-  border-color: rgba(129,140,248,.32);
+  background: linear-gradient(150deg, var(--mi), rgba(9,187,198,.02));
+  border-color: rgba(9,187,198,.28);
 }
 .ap.pe {
-  background: linear-gradient(150deg, var(--pe), rgba(244,114,182,.03));
-  border-color: rgba(244,114,182,.32);
+  background: linear-gradient(150deg, var(--pe), rgba(255,154,118,.02));
+  border-color: rgba(255,154,118,.28);
 }
 .ap b {
   display: flex;
@@ -342,7 +359,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   gap: 8px;
   margin-bottom: 5px;
 }
-.ap small { opacity: .7; font-size: 13px; }
+.ap small { opacity: .75; font-size: 13px; }
 .ap.canc { opacity: .38; }
 .ap.canc b span:first-child { text-decoration: line-through; }
 
@@ -378,13 +395,13 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   display: flex;
   padding: 6px;
   border-radius: var(--r-xl);
-  background: rgba(8,4,20,.84);
+  background: rgba(10,16,28,.88);
   backdrop-filter: blur(36px) saturate(2);
   -webkit-backdrop-filter: blur(36px) saturate(2);
-  border: 1px solid rgba(168,85,247,.22);
+  border: 1px solid rgba(65,85,125,.3);
   box-shadow:
     0 24px 52px -16px rgba(0,0,0,.85),
-    0 0 0 .5px rgba(255,255,255,.04);
+    0 0 0 .5px rgba(255,255,255,.05);
   z-index: 100;
 }
 
@@ -406,7 +423,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
 .nav div i  { display: block; font-style: normal; }
 .nav .on    { color: #fff; }
 
-/* Sliding pill indicator */
+/* Sliding pill indicator (AlxTrade gradient style) */
 .nav::before {
   content: '';
   position: absolute;
@@ -414,10 +431,10 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   width: calc((100% - 12px) / 4);
   border-radius: var(--r-lg);
   background: linear-gradient(135deg,
-    rgba(168,85,247,.36) 0%,
-    rgba(217,70,239,.22) 100%);
-  border: 1px solid rgba(168,85,247,.38);
-  box-shadow: var(--hl), 0 4px 24px -8px rgba(168,85,247,.7);
+    rgba(9,187,198,.3) 0%,
+    rgba(79,117,248,.22) 100%);
+  border: 1px solid rgba(9,187,198,.35);
+  box-shadow: var(--hl), 0 4px 20px -6px rgba(9,187,198,.6);
   transform: translateX(calc(var(--i, 0) * 100%));
   transition: transform .48s cubic-bezier(.3,1.35,.5,1);
   pointer-events: none;
@@ -435,7 +452,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
 .bd {
   position: absolute;
   inset: 0;
-  background: rgba(3,1,12,.65);
+  background: rgba(4,7,14,.65);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
 }
@@ -447,7 +464,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
-  background: #0f0c1c;
+  background: #0d1422;
   background-image: linear-gradient(var(--cd), var(--cd));
   border: 1px solid var(--bo);
   border-radius: var(--r-xl);
@@ -455,7 +472,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   padding-bottom: calc(24px + env(safe-area-inset-bottom, 0px));
   max-width: 508px;
   margin: 0 auto;
-  box-shadow: 0 -16px 64px -12px rgba(0,0,0,.6), var(--hl);
+  box-shadow: 0 -16px 64px -12px rgba(0,0,0,.7), var(--hl);
   animation: sheet-up .38s cubic-bezier(.2,1.15,.4,1) both;
 }
 
@@ -499,7 +516,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   transition: width .7s cubic-bezier(.2,1,.3,1);
 }
 
-/* ── CLIENT LIST ─────────────────────────────────────────────── */
+/* ── CLIENT LIST & CARDS ─────────────────────────────────────── */
 .li {
   display: flex;
   justify-content: space-between;
@@ -510,12 +527,18 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   cursor: pointer;
 }
 .cd.li {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
   padding: 16px 18px;
   border-bottom: 1px solid var(--bo);
   margin-bottom: 8px;
   transition: transform .2s cubic-bezier(.3,1.6,.5,1);
 }
 .cd.li:active { transform: scale(.99); }
+.cd.li > span { flex: 1; min-width: 0; }
+.cd.li > small { flex-shrink: 0; }
 
 /* ── SETTINGS SCHEDULE ───────────────────────────────────────── */
 .dr {
@@ -582,7 +605,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   max-width: 380px;
 }
 .tst {
-  background: rgba(14,10,28,.96);
+  background: rgba(12,18,30,.96);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid var(--bo);
@@ -594,8 +617,8 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   animation: tst-in .3s cubic-bezier(.2,1.2,.4,1) both;
   pointer-events: auto;
 }
-.tst.ok  { border-color: rgba(129,140,248,.45); }
-.tst.err { border-color: rgba(244,114,182,.45); color: var(--pe2); }
+.tst.ok  { border-color: rgba(9,187,198,.45); }
+.tst.err { border-color: rgba(255,154,118,.45); color: var(--pe2); }
 .tst.warn{ border-color: rgba(250,204,21,.35);  color: #fde047; }
 @keyframes tst-in {
   from { opacity: 0; transform: translateY(-10px) scale(.96); }
@@ -608,9 +631,9 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   overflow: hidden;
   background: linear-gradient(
     90deg,
-    rgba(255,255,255,.04) 25%,
-    rgba(168,85,247,.09)  50%,
-    rgba(255,255,255,.04) 75%
+    rgba(255,255,255,.03) 25%,
+    rgba(9,187,198,.08)   50%,
+    rgba(255,255,255,.03) 75%
   );
   background-size: 200% 100%;
   animation: shimmer 1.6s ease-in-out infinite;
@@ -620,7 +643,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   100% { background-position: -200% 0; }
 }
 
-/* ── SPLASH SCREEN ───────────────────────────────────────────── */
+/* ── SPLASH SCREEN (Original Brand Colors Preserved) ─────────── */
 #splash {
   position: fixed;
   inset: 0;
@@ -647,8 +670,8 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   border-radius: 50%;
   background: radial-gradient(
     closest-side,
-    rgba(168,85,247,.48),
-    rgba(217,70,239,.2) 45%,
+    rgba(9,187,198,.45),
+    rgba(0,180,177,.18) 45%,
     transparent
   );
 }
@@ -658,11 +681,12 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.5); }
   height: auto;
   overflow: visible;
   animation: lg-in .85s cubic-bezier(.2,.8,.2,1) both;
-  filter: drop-shadow(0 0 32px rgba(168,85,247,.42));
+  filter: drop-shadow(0 0 32px rgba(9,187,198,.4));
 }
-.spl-logo .lg-w { fill: #fff; }
-.spl-logo .lg-a { fill: var(--accent); }
-.spl-logo .lg-b { fill: var(--accent-2); }
+/* Original Brand Colors */
+.spl-logo .lg-w { fill: #ffffff !important; }
+.spl-logo .lg-a { fill: #09bbc6 !important; }
+.spl-logo .lg-b { fill: #00b4b1 !important; }
 .spl-logo .fp {
   transform-box: fill-box;
   transform-origin: center;
