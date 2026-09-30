@@ -1,7 +1,8 @@
 /* ================================================================
    KARELOVA STUDIO · DESIGN SYSTEM 2026
-   Palette: AlxTrade Deep Dark (#0a0e17) + Cyan/Teal Brand (#09bbc6 / #00b4b1)
-   + Soft Blue/Purple Accent (#5073f0 / #3d5ad4)
+   Palette: AlxTrade Deep Dark (#0a0e17)
+   Primary Buttons & Selection: Blue Gradient (#5b82ff → #4369f6)
+   Logo: Original Brand Cyan (#09bbc6) & Teal (#00b4b1)
    ================================================================ */
 
 /* ── TOKENS ─────────────────────────────────────────────────── */
@@ -11,21 +12,17 @@
   --panel: #0f1624;
   --line:  #1b253b;
 
-  /* Brand Accents (Karelova Logo Colors: Cyan #09bbc6 & Teal #00b4b1) */
-  --accent:      #09bbc6;
-  --accent-2:    #00b4b1;
-  --accent-soft: rgba(9,187,198,.16);
-  --ac2:         #4ee3ec;
-  --ai:          #031318;    /* dark text on cyan button */
-
-  /* AlxTrade UI accents: blue-violet secondary */
-  --btn-blue:    linear-gradient(135deg, #4f75f8 0%, #3a5ce0 100%);
-  --btn-glow:    0 8px 24px -8px rgba(79,117,248,.65);
+  /* Primary Accent: AlxTrade Blue Gradient (#5b82ff -> #4369f6) */
+  --accent:      #5b82ff;
+  --accent-2:    #4369f6;
+  --accent-soft: rgba(91,130,255,.16);
+  --ac2:         #7b9cff;
+  --ai:          #ffffff;    /* white text on blue buttons */
 
   /* Service categories */
-  --mi:  rgba(9,187,198,.14);   /* Podology · cyan/teal brand */
-  --mi2: #09bbc6;
-  --pe:  rgba(255,154,118,.14); /* Sugaring · soft coral/peach */
+  --mi:  rgba(91,130,255,.14);  /* Podology · blue accent */
+  --mi2: #5b82ff;
+  --pe:  rgba(255,154,118,.14); /* Sugaring · soft peach */
   --pe2: #ff9a76;
 
   /* Text colors */
@@ -105,11 +102,9 @@ h3 {
   z-index: -1;
   background:
     radial-gradient(ellipse 650px 480px at 105% -5%,
-      rgba(9,187,198,.18), transparent 70%),
+      rgba(91,130,255,.14), transparent 70%),
     radial-gradient(ellipse 500px 500px at -10% 55%,
-      rgba(79,117,248,.12), transparent 70%),
-    radial-gradient(ellipse 400px 350px at 50% 110%,
-      rgba(0,180,177,.10), transparent 70%),
+      rgba(67,105,246,.10), transparent 70%),
     var(--bg);
 }
 
@@ -139,7 +134,7 @@ h3 {
 .row { display: flex; gap: 8px; align-items: flex-end; }
 .row > * { flex: 1; min-width: 0; }
 
-/* Header action buttons row: vertical / horizontal layout guarantee */
+/* Header action buttons row */
 h1 > span {
   display: inline-flex !important;
   flex-direction: row !important;
@@ -161,38 +156,38 @@ h1 > span {
 }
 
 /* ── BUTTONS ─────────────────────────────────────────────────── */
+/* Unified style: uppercase, 14px, letter-spacing, bold, no extra glow */
 .bt {
   border: 0;
-  background: linear-gradient(135deg, var(--accent) 0%, var(--accent-2) 100%);
-  color: var(--ai);
+  background: linear-gradient(135deg, #5b82ff 0%, #4369f6 100%);
+  color: #ffffff;
   border-radius: var(--r-md);
   padding: 15px 20px;
-  font: 700 15px/1 'Space Grotesk', Inter, sans-serif;
+  font: 700 13px/1 'Space Grotesk', Inter, sans-serif;
+  letter-spacing: .06em;
+  text-transform: uppercase;
   cursor: pointer;
-  box-shadow:
-    0 8px 24px -8px rgba(9,187,198,.7),
-    inset 0 1px 0 rgba(255,255,255,.3);
-  transition:
-    transform  .2s cubic-bezier(.3,1.6,.5,1),
-    box-shadow .2s;
+  box-shadow: 0 4px 12px rgba(0,0,0,.25), inset 0 1px 0 rgba(255,255,255,.2);
+  transition: transform .2s cubic-bezier(.3,1.6,.5,1), background .2s;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 6px;
+  gap: 8px;
   text-decoration: none;
   text-align: center;
 }
 .bt:active {
-  transform: scale(.95);
-  box-shadow: 0 4px 12px -4px rgba(9,187,198,.4);
+  transform: scale(.96);
 }
 
 .bt.gh {
-  background: rgba(255,255,255,.05);
-  color: var(--ac2);
+  background: rgba(20,30,48,.6);
+  color: var(--tx);
   border: 1px solid var(--bo);
-  box-shadow: var(--sh), var(--hl);
+  box-shadow: var(--hl);
+  text-transform: uppercase;
+  letter-spacing: .06em;
 }
 .bt.gh:active { transform: scale(.96); }
 
@@ -201,7 +196,7 @@ h1 > span {
 /* Icon-only button */
 .ib {
   border: 1px solid var(--bo);
-  background: rgba(255,255,255,.05);
+  background: rgba(20,30,48,.6);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   width: 42px;
@@ -214,13 +209,14 @@ h1 > span {
   justify-content: center !important;
   padding: 0;
   flex: 0 0 42px !important;
+  box-shadow: none;
   transition:
     transform  .2s cubic-bezier(.3,1.6,.5,1),
     background .2s,
     border-color .2s;
 }
 .ib:active  { transform: scale(.87); }
-.ib:hover   { background: rgba(9,187,198,.12); border-color: rgba(9,187,198,.4); }
+.ib:hover   { background: rgba(91,130,255,.15); border-color: rgba(91,130,255,.4); }
 
 /* ── FORM ELEMENTS ───────────────────────────────────────────── */
 label {
@@ -232,7 +228,7 @@ label {
   margin: 16px 0 6px;
 }
 
-input, select, textarea {
+input:not([type=checkbox]), select, textarea {
   width: 100%;
   font: 15px/1.4 Inter, system-ui, sans-serif;
   color: var(--tx);
@@ -246,11 +242,11 @@ input, select, textarea {
   -webkit-appearance: none;
   appearance: none;
 }
-input:focus, select:focus, textarea:focus {
+input:not([type=checkbox]):focus, select:focus, textarea:focus {
   border-color: var(--accent);
-  background: rgba(9,187,198,.06);
+  background: rgba(91,130,255,.06);
   box-shadow:
-    0 0 0 4px rgba(9,187,198,.16),
+    0 0 0 3px rgba(91,130,255,.2),
     inset 0 2px 8px rgba(0,0,0,.08);
 }
 textarea { min-height: 84px; resize: vertical; }
@@ -275,36 +271,35 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
 
 .dy {
   position: relative;
-  padding: 9px 0;
+  width: 32px;
+  height: 32px;
+  margin: 2px auto;
   border-radius: 50%;
-  font: 600 14px/1 Inter, sans-serif;
+  font: 600 13px/1 Inter, sans-serif;
   cursor: pointer;
-  aspect-ratio: 1;
   display: grid;
   place-items: center;
   transition: transform .2s cubic-bezier(.3,1.6,.5,1), background .2s;
 }
-.dy:hover   { background: rgba(9,187,198,.12); }
+.dy:hover   { background: rgba(91,130,255,.12); }
 .dy:active  { transform: scale(.84); }
 .dy.today   { color: var(--ac2); font-weight: 700; }
 .dy.sel {
-  background: linear-gradient(135deg, var(--accent), var(--accent-2));
-  color: var(--ai);
+  background: linear-gradient(135deg, #5b82ff, #4369f6);
+  color: #ffffff;
   font-weight: 700;
-  box-shadow:
-    0 6px 20px -6px rgba(9,187,198,.8),
-    inset 0 1px 0 rgba(255,255,255,.4);
+  box-shadow: 0 2px 8px rgba(0,0,0,.3);
 }
 .dy u {
   position: absolute;
-  left: 50%; bottom: 3px;
-  width: 4px; height: 4px;
-  margin-left: -2px;
+  left: 50%; bottom: 2px;
+  width: 3px; height: 3px;
+  margin-left: -1.5px;
   border-radius: 9px;
   background: var(--ac2);
   text-decoration: none;
 }
-.dy.sel u { background: var(--ai); }
+.dy.sel u { background: #ffffff; }
 
 /* ── TIME SLOTS ──────────────────────────────────────────────── */
 .slot {
@@ -317,13 +312,13 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
   margin-bottom: 8px;
   cursor: pointer;
   color: var(--mu);
-  background: rgba(9,187,198,.03);
+  background: rgba(91,130,255,.02);
   transition:
     border-color .2s,
     background   .2s,
     transform    .2s cubic-bezier(.3,1.6,.5,1);
 }
-.slot:hover  { border-color: rgba(9,187,198,.45); background: rgba(9,187,198,.07); }
+.slot:hover  { border-color: rgba(91,130,255,.4); background: rgba(91,130,255,.06); }
 .slot:active { transform: scale(.98); }
 .slot span   { font-weight: 600; color: var(--tx); font-size: 14px; }
 .slot em     { font-style: normal; font-size: 14px; }
@@ -345,8 +340,8 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
 }
 .ap:active { transform: scale(.98); }
 .ap.mi {
-  background: linear-gradient(150deg, var(--mi), rgba(9,187,198,.02));
-  border-color: rgba(9,187,198,.28);
+  background: linear-gradient(150deg, var(--mi), rgba(91,130,255,.02));
+  border-color: rgba(91,130,255,.28);
 }
 .ap.pe {
   background: linear-gradient(150deg, var(--pe), rgba(255,154,118,.02));
@@ -423,18 +418,16 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
 .nav div i  { display: block; font-style: normal; }
 .nav .on    { color: #fff; }
 
-/* Sliding pill indicator (AlxTrade gradient style) */
+/* Sliding pill indicator (AlxTrade Blue gradient style) */
 .nav::before {
   content: '';
   position: absolute;
   top: 6px; bottom: 6px; left: 6px;
   width: calc((100% - 12px) / 4);
   border-radius: var(--r-lg);
-  background: linear-gradient(135deg,
-    rgba(9,187,198,.3) 0%,
-    rgba(79,117,248,.22) 100%);
-  border: 1px solid rgba(9,187,198,.35);
-  box-shadow: var(--hl), 0 4px 20px -6px rgba(9,187,198,.6);
+  background: linear-gradient(135deg, #5b82ff 0%, #4369f6 100%);
+  border: 1px solid rgba(91,130,255,.4);
+  box-shadow: var(--hl), 0 2px 10px rgba(0,0,0,.3);
   transform: translateX(calc(var(--i, 0) * 100%));
   transition: transform .48s cubic-bezier(.3,1.35,.5,1);
   pointer-events: none;
@@ -550,7 +543,17 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
 }
 .dr b { font-size: 13px; color: var(--mu); font-weight: 600; }
 .dr input { padding: 10px; }
-.dr input[type=checkbox] { width: 20px; height: 20px; accent-color: var(--mi2); cursor: pointer; }
+.dr input[type=checkbox] {
+  width: 20px !important;
+  height: 20px !important;
+  accent-color: #5b82ff !important;
+  cursor: pointer !important;
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
 
 /* ── PHOTO GRID ──────────────────────────────────────────────── */
 .ph { display: flex; gap: 8px; flex-wrap: wrap; }
@@ -617,7 +620,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
   animation: tst-in .3s cubic-bezier(.2,1.2,.4,1) both;
   pointer-events: auto;
 }
-.tst.ok  { border-color: rgba(9,187,198,.45); }
+.tst.ok  { border-color: rgba(91,130,255,.45); }
 .tst.err { border-color: rgba(255,154,118,.45); color: var(--pe2); }
 .tst.warn{ border-color: rgba(250,204,21,.35);  color: #fde047; }
 @keyframes tst-in {
@@ -632,7 +635,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
   background: linear-gradient(
     90deg,
     rgba(255,255,255,.03) 25%,
-    rgba(9,187,198,.08)   50%,
+    rgba(91,130,255,.08)  50%,
     rgba(255,255,255,.03) 75%
   );
   background-size: 200% 100%;
@@ -683,7 +686,7 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
   animation: lg-in .85s cubic-bezier(.2,.8,.2,1) both;
   filter: drop-shadow(0 0 32px rgba(9,187,198,.4));
 }
-/* Original Brand Colors */
+/* Original Brand Colors ONLY in Logo */
 .spl-logo .lg-w { fill: #ffffff !important; }
 .spl-logo .lg-a { fill: #09bbc6 !important; }
 .spl-logo .lg-b { fill: #00b4b1 !important; }

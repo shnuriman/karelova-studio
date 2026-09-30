@@ -27,7 +27,7 @@ function login(){return new Promise(res=>{
   show('<h2 style="margin:0 0 16px">Karelova Studio</h2><label>Email</label><input id="kr-e" type="email" autocomplete="username" style="'+inp+'"><label>Пароль</label><input id="kr-p" type="password" autocomplete="current-password" style="'+inp+'"><div id="kr-x" style="color:#ff8a80;min-height:20px;margin-bottom:8px"></div><button id="kr-b" style="'+btn+'">Увійти</button>');
   const go=async()=>{const x=document.getElementById('kr-x');x.textContent='';
     try{await auth('password',{email:document.getElementById('kr-e').value.trim(),password:document.getElementById('kr-p').value});hide();res()}
-    catch(e){x.textContent=e.auth?'Невірний email або пароль':'Немає зв’язку з сервером'}};
+    catch(e){x.textContent=e.auth?'Невірний email або пароль':'Немає зв\u2019язку з сервером'}};
   document.getElementById('kr-b').addEventListener('click',go);
   document.getElementById('kr-p').addEventListener('keydown',e=>{if(e.key=='Enter')go()});
 })}
@@ -67,10 +67,28 @@ async function push(){
   try{
     const t=await token(),h={...H(t),Prefer:'return=representation'};let r,j;
     if(ver===0){
+      // Спочатку пробуємо INSERT (новий акаунт)
       r=await fetch(T,{method:'POST',headers:h,body:JSON.stringify({data:db,version:1})});
-      if(r.status==409){busy=false;return conflict()}
-      if(!r.ok)throw new Error('server');
-      ver=1;
+      if(r.status==401)throw authErr();
+      if(r.status==409){
+        // Рядок вже існує (інший пристрій / нова сесія) — читаємо актуальну версію
+        const rv=await fetch(T+'?select=version',{headers:H(t)});
+        if(rv.status==401)throw authErr();
+        const ra=rv.ok?await rv.json():[];
+        if(!ra.length){busy=false;setDirty(true);return}
+        ver=ra[0].version;
+        // Тепер робимо PATCH з актуальною версією
+        r=await fetch(T+'?version=eq.'+ver,{method:'PATCH',headers:h,body:JSON.stringify({data:db,version:ver+1})});
+        if(r.status==401)throw authErr();
+        if(!r.ok)throw new Error('server');
+        j=await r.json();
+        if(!j.length){busy=false;return conflict()}
+        ver=j[0].version;
+      }else{
+        if(!r.ok)throw new Error('server');
+        j=await r.json();
+        ver=j.length?j[0].version:1;
+      }
     }else{
       r=await fetch(T+'?version=eq.'+ver,{method:'PATCH',headers:h,body:JSON.stringify({data:db,version:ver+1})});
       if(r.status==401)throw authErr();
@@ -81,20 +99,21 @@ async function push(){
     }
     localStorage.setItem(VK,String(ver));
     busy=false;setDirty(false);
+    if(typeof window.toast=='function')window.toast('\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e');
   }catch(e){
     busy=false;
-    if(e.auth){setDirty(true);localStorage.removeItem(SK);alert('Сесія завершилась. Увійдіть знову: незбережені зміни збережуться після входу.');location.reload();return}
+    if(e.auth){setDirty(true);localStorage.removeItem(SK);alert('\u0421\u0435\u0441\u0456\u044f \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043b\u0430\u0441\u044c. \u0423\u0432\u0456\u0439\u0434\u0456\u0442\u044c \u0437\u043d\u043e\u0432\u0443: \u043d\u0435\u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u0437\u043c\u0456\u043d\u0438 \u0437\u0431\u0435\u0440\u0435\u0436\u0443\u0442\u044c\u0441\u044f \u043f\u0456\u0441\u043b\u044f \u0432\u0445\u043e\u0434\u0443.');location.reload();return}
     setDirty(true);
   }
   if(again){again=false;push()}
 }
 function save(d){
   db=d;
-  try{localStorage.setItem(K,JSON.stringify(db))}catch(e){alert('Пам’ять браузера заповнена. Видаліть частину фото.')}
+  try{localStorage.setItem(K,JSON.stringify(db))}catch(e){alert('\u041f\u0430\u043c\u2019\u044f\u0442\u044c \u0431\u0440\u0430\u0443\u0437\u0435\u0440\u0430 \u0437\u0430\u043f\u043e\u0432\u043d\u0435\u043d\u0430. \u0412\u0438\u0434\u0430\u043b\u0456\u0442\u044c \u0447\u0430\u0441\u0442\u0438\u043d\u0443 \u0444\u043e\u0442\u043e.')}
   setDirty(true);clearTimeout(timer);timer=setTimeout(push,600);
 }
 function logout(){
-  if(dirty()&&!confirm('Є зміни, які ще не збережені на сервері. Вийти все одно?'))return;
+  if(dirty()&&!confirm('\u0454 \u0437\u043c\u0456\u043d\u0438, \u044f\u043a\u0456 \u0449\u0435 \u043d\u0435 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u043d\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0456. \u0412\u0438\u0439\u0442\u0438 \u0432\u0441\u0435 \u043e\u0434\u043d\u043e?'))return;
   [SK,K,VK,DK].forEach(k=>localStorage.removeItem(k));location.reload();
 }
 
@@ -116,14 +135,14 @@ window.addEventListener('online',()=>{if(dirty())push()});
       const s=await loadRemote(),c=cache(),cv=+localStorage.getItem(VK)||0;
       ver=s.version;
       if(c&&dirty()&&cv===s.version){db=c}          // локальні незбережені правки на актуальній версії
-      else{db=s.data;if(c&&dirty())alert('Локальні незбережені зміни відкинуто: дані на сервері новіші.');setDirty(false)}
+      else{db=s.data;if(c&&dirty())alert('\u041b\u043e\u043a\u0430\u043b\u044c\u043d\u0456 \u043d\u0435\u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u0437\u043c\u0456\u043d\u0438 \u0432\u0456\u0434\u043a\u0438\u043d\u0443\u0442\u043e: \u0434\u0430\u043d\u0456 \u043d\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0456 \u043d\u043e\u0432\u0456\u0448\u0456.');setDirty(false)}
       if(db){try{localStorage.setItem(K,JSON.stringify(db));localStorage.setItem(VK,String(ver))}catch(e){}}
       break;
     }catch(e){
       if(e.auth){sess=null;localStorage.removeItem(SK);continue}
       const c=cache();                              // офлайн: працюємо з кешу
       if(c){db=c;ver=+localStorage.getItem(VK)||0;break}
-      return msg('Немає зв’язку з сервером, а локальних даних на цьому пристрої ще немає.',true);
+      return msg('\u041d\u0435\u043c\u0430\u0454 \u0437\u0432\u2019\u044f\u0437\u043a\u0443 \u0437 \u0441\u0435\u0440\u0432\u0435\u0440\u043e\u043c, \u0430 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u0438\u0445 \u0434\u0430\u043d\u0438\u0445 \u043d\u0430 \u0446\u044c\u043e\u043c\u0443 \u043f\u0440\u0438\u0441\u0442\u0440\u043e\u0457 \u0449\u0435 \u043d\u0435\u043c\u0430\u0454.',true);
     }
   }
   window.__DB=db;window.__SAVE=save;window.__LOGOUT=logout;
