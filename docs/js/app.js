@@ -51,24 +51,36 @@ if (!db) {
   save();
 }
 
+// Прапорці одноразових міграцій живуть у самих даних (db.mig), а не в localStorage пристрою.
+// Інакше кожен новий девайс "скидав" і перезаповнював дані на сервері.
+db.mig = db.mig || {};
+if (!db.mig._init) {
+  if ((db.clients || []).length || (db.appts || []).length || (db.services || []).length) {
+    ['reset', 'clients', 'services', 'sep2026'].forEach(k => { db.mig[k] = 1; });
+  }
+  db.mig._init = 1;
+}
+const migDone = k => !!db.mig[k];
+const migSet = k => { db.mig[k] = 1; };
+
 // Одноразове скидання тестових записів, клієнтів та послуг
 const RESET_KEY = 'karelova_reset_v1';
 try {
-  if (!localStorage.getItem(RESET_KEY)) {
+  if (!migDone('reset')) {
     db.appts = [];
     db.clients = [];
     db.services = [];
     db.expenses = [];
     if (db.sched && db.sched.over) db.sched.over = {};
+    migSet('reset');
     save();
-    localStorage.setItem(RESET_KEY, '1');
   }
 } catch (e) {}
 
 // Одноразове заповнення клієнтів
 const SEED_CLIENTS_KEY = 'karelova_seed_clients_v1';
 try {
-  if (!localStorage.getItem(SEED_CLIENTS_KEY)) {
+  if (!migDone('clients')) {
     const raw = [
       'Аліка','Ксюша (+380967012306)','Людмила','Софія','Вікторія',
       'Галина Володимирівна','Максим Микитюк','Крістіна','Валентина Василівна','Зоя',
@@ -115,15 +127,15 @@ try {
       const name  = m ? entry.replace(phoneRx, '').trim() : entry.trim();
       db.clients.push({ id: uid(), name, phone, ig: '', note: '' });
     });
+    migSet('clients');
     save();
-    localStorage.setItem(SEED_CLIENTS_KEY, '1');
   }
 } catch (e) {}
 
 // Одноразове заповнення послуг (Шугаринг та Подологія)
 const SEED_SERVICES_KEY = 'karelova_seed_services_v1';
 try {
-  if (!localStorage.getItem(SEED_SERVICES_KEY)) {
+  if (!migDone('services')) {
     const defaultServices = [
       // Шугаринг
       { cat: 'Шугаринг', title: 'Личко', desc: '', price: 100, dur: 15 },
@@ -152,15 +164,15 @@ try {
         db.services.push({ id: uid(), ...s });
       }
     });
+    migSet('services');
     save();
-    localStorage.setItem(SEED_SERVICES_KEY, '1');
   }
 } catch (e) {}
 
 // Одноразове заповнення записів за вересень 2026 року
 const SEED_APPTS_SEP2026_KEY = 'karelova_seed_appts_sep2026_v1';
 try {
-  if (!localStorage.getItem(SEED_APPTS_SEP2026_KEY)) {
+  if (!migDone('sep2026')) {
     const findClient = name => {
       const q = name.trim().toLowerCase();
       let cl = db.clients.find(c => c.name.toLowerCase() === q);
@@ -325,8 +337,8 @@ try {
       }
     });
 
+    migSet('sep2026');
     save();
-    localStorage.setItem(SEED_APPTS_SEP2026_KEY, '1');
   }
 } catch (e) {}
 

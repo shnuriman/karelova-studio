@@ -684,7 +684,8 @@ input[type=date]::-webkit-calendar-picker-indicator { filter: invert(.6); }
   height: auto;
   overflow: visible;
   animation: lg-in .85s cubic-bezier(.2,.8,.2,1) both;
-  filter: drop-shadow(0 0 32px rgba(9,187,198,.4));
+  position: relative;
+  z-index: 1;
 }
 /* Original Brand Colors ONLY in Logo */
 .spl-logo .lg-w { fill: #ffffff !important; }
@@ -1804,3 +1805,25 @@ body, #v, .cd, .ap, .stl, .sti, .nav, .pn, input, select, textarea, .ib, .bt.gh,
   box-shadow: 0 2px 10px rgba(217, 119, 6, 0.06);
 }
 
+
+
+/* ── Заставка: свічення без filter (на iOS filter+animation малює прямокутник за логотипом) ── */
+#splash::after {
+  content: '';
+  position: absolute;
+  left: 50%; top: 50%;
+  width: min(520px, 110vw);
+  height: 240px;
+  transform: translate(-50%, -50%);
+  background: radial-gradient(closest-side, rgba(9,187,198,.14), transparent);
+  pointer-events: none;
+}
+
+/* ── Розклад дня: компактніші рядки ─────────────────────────── */
+.slot { padding: 5px 12px; margin-bottom: 3px; border-radius: 12px; }
+.slot span, .slot em { font-size: 13px; }
+.ap { padding: 8px 12px; margin-bottom: 3px; border-radius: 14px; gap: 10px; }
+.ap .am b { font-size: 13.5px; line-height: 1.3; }
+.ap .as { margin-top: 2px; font-size: 12.5px; line-height: 1.35; }
+.ap .ar2 { gap: 6px; }
+.ap .ar2 em { font-size: 13.5px; }
