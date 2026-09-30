@@ -851,22 +851,6 @@ html, body { height: auto; overflow: hidden; }
 }
 #v { padding-bottom: calc(var(--nav-h) + 40px + env(safe-area-inset-bottom, 0px)); }
 
-/* ── Sticky calendar header ─────────────────────────────────── */
-.sch-hdr {
-  position: sticky;
-  top: calc(-22px - env(safe-area-inset-top, 0px));
-  z-index: 15;
-  margin-top: calc(-22px - env(safe-area-inset-top, 0px));
-  padding-top: calc(22px + env(safe-area-inset-top, 0px));
-  padding-bottom: 4px;
-  background:
-    radial-gradient(ellipse 620px 460px at 105% -8%, rgba(144,133,255,.20), transparent 70%),
-    var(--bg);
-}
-.sch-hdr h1 { margin-top: 0; }
-.sch-hdr .cd { margin-bottom: 8px; }
-.sch-hdr h3 { margin: 4px 0 6px; }
-
 /* У звичайній вкладці браузера (панелі Safari) тримаємо меню біля нижнього краю видимої області */
 @media (display-mode: browser) {
   :root { --app-h: 100dvh; }
@@ -1412,9 +1396,6 @@ body, #v, .cd, .ap, .stl, .sti, .nav, .pn, input, select, textarea, .ib, .bt.gh,
 
 /* Фон (чистий однорідний, без кольорових плям у кутах) */
 [data-theme="light"] .bg {
-  background: var(--bg);
-}
-[data-theme="light"] .sch-hdr {
   background: var(--bg);
 }
 [data-theme="light"] .bg::after {

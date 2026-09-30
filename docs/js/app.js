@@ -509,16 +509,14 @@ function sch() {
   }
   sl += list.filter(a => a.status == 'canc').map(a => apCard(a, sv(a.svc[0]))).join('');
   const dayLabel = dt.getDate() + ' ' + MN_GEN[dt.getMonth()] + ', ' + DN[(dt.getDay() + 6) % 7];
-  return `<div class="sch-hdr">
-    <h1>${MN[mo]} ${y}
-      <span>
-        <button class="ib" data-a="pm" data-v="-1">${ic('prev')}</button>
-        <button class="ib" data-a="pm" data-v="1">${ic('next')}</button>
-      </span>
-    </h1>
-    <div class="cd"><div class="cal">${cells}</div></div>
-    <h3>${dayLabel}</h3>
-  </div>
+  return `<h1>${MN[mo]} ${y}
+    <span>
+      <button class="ib" data-a="pm" data-v="-1">${ic('prev')}</button>
+      <button class="ib" data-a="pm" data-v="1">${ic('next')}</button>
+    </span>
+  </h1>
+  <div class="cd"><div class="cal">${cells}</div></div>
+  <h3>${dayLabel}</h3>
   ${sl}
   ${cfg.on ? `<button class="bt gh" style="margin-top:6px" data-a="dof">${ic('moon')} Зробити вихідним</button>` : ''}`;
 }
