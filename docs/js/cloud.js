@@ -43,10 +43,10 @@ const LOGIN_CSS=`
   }
   .kr-label{
     display:block;
-    font:700 11px/1 Inter,sans-serif;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:rgba(126,139,166,.9);
+    font:500 13px/1 Inter,sans-serif;
+    letter-spacing:0;
+    text-transform:none;
+    color:rgba(128,136,170,.95);
     margin:0 0 8px;
   }
   .kr-inp{
@@ -63,9 +63,9 @@ const LOGIN_CSS=`
     -webkit-appearance:none;appearance:none;
   }
   .kr-inp:focus{
-    border-color:rgba(91,130,255,.65);
-    background:rgba(91,130,255,.06);
-    box-shadow:0 0 0 3px rgba(91,130,255,.18),inset 0 2px 6px rgba(0,0,0,.15);
+    border-color:#8a82ff;
+    background:rgba(111,110,254,.07);
+    box-shadow:0 0 0 4px rgba(111,110,254,.18),inset 0 2px 6px rgba(0,0,0,.15);
   }
   .kr-inp::placeholder{color:rgba(126,139,166,.45)}
   #kr-err{
@@ -76,18 +76,14 @@ const LOGIN_CSS=`
     text-align:center;
   }
   #kr-btn{
-    width:100%;padding:16px;
-    border:none;border-radius:14px;
-    background:linear-gradient(135deg,#5b82ff 0%,#4369f6 100%);
-    color:#fff;
-    font:700 14px/1 'Space Grotesk',Inter,sans-serif;
-    letter-spacing:.06em;
-    text-transform:uppercase;
-    cursor:pointer;
-    box-shadow:0 4px 16px rgba(67,105,246,.35),inset 0 1px 0 rgba(255,255,255,.2);
+    width:100%;min-height:54px;padding:0 24px;border:0;border-radius:999px;
+    background:linear-gradient(100deg,#9085ff 0%,#6f6efe 45%,#4ca9ff 100%);
+    color:#fff;font:600 16px/1 Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none;
+    display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;
+    box-shadow:0 0 0 5px rgba(111,110,254,.16),0 10px 28px -8px rgba(111,110,254,.65),inset 0 1px 0 rgba(255,255,255,.28);
     transition:transform .2s cubic-bezier(.3,1.6,.5,1),box-shadow .2s;
   }
-  #kr-btn:active{transform:scale(.97);box-shadow:0 2px 8px rgba(67,105,246,.25)}
+  #kr-btn:active{transform:scale(.97)}
   #kr-btn:disabled{opacity:.55;cursor:default;transform:none}
 `;
 
@@ -109,7 +105,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const show=h=>{ov.innerHTML='<div id="kr-card">'+h+'</div>';ov.style.display='flex'};
 const hide=()=>{ov.style.display='none'};
 
-const btnHtml='width:100%;padding:14px;border:0;border-radius:14px;background:linear-gradient(135deg,#5b82ff,#4369f6);color:#fff;font:700 13px/1 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer';
+const btnHtml='width:100%;padding:14px;border:0;border-radius:14px;min-height:54px;background:linear-gradient(100deg,#9085ff,#6f6efe 45%,#4ca9ff);color:#fff;font:600 16px/1 Inter,sans-serif;cursor:pointer;box-shadow:0 0 0 5px rgba(111,110,254,.16),0 10px 28px -8px rgba(111,110,254,.65)';
 
 const msg=(t,retry)=>show(
   `<div id="kr-logo-wrap">${LOGO_SVG}</div>
@@ -125,17 +121,17 @@ function login(){return new Promise(res=>{
     <label class="kr-label">Пароль</label>
     <input id="kr-p" class="kr-inp" type="password" autocomplete="current-password" placeholder="••••••••">
     <div id="kr-err"></div>
-    <button id="kr-btn">Увійти</button>
+    <button id="kr-btn"><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4.5h2.5a2 2 0 012 2v11a2 2 0 01-2 2H15M10 8l4 4-4 4M14 12H4.5"/></svg>Увійти</button>
   `);
   const go=async()=>{
     const x=document.getElementById('kr-err'),b=document.getElementById('kr-btn');
-    x.textContent='';b.disabled=true;b.textContent='Вхід...';
+    x.textContent='';b.disabled=true;b.lastChild.textContent='Вхід...';
     try{
       await auth('password',{email:document.getElementById('kr-e').value.trim(),password:document.getElementById('kr-p').value});
       hide();res();
     }catch(e){
       x.textContent=e.auth?'Невірний email або пароль':'Немає зв\u2019язку з сервером';
-      b.disabled=false;b.textContent='Увійти';
+      b.disabled=false;b.lastChild.textContent='Увійти';
     }
   };
   document.getElementById('kr-btn').addEventListener('click',go);
@@ -253,7 +249,7 @@ window.addEventListener('online',()=>{if(dirty())push()});
     }
   }
   window.__DB=db;window.__SAVE=save;window.__LOGOUT=logout;
-  const s=document.createElement('script');s.src='js/app.js?v=7';document.body.appendChild(s);
+  const s=document.createElement('script');s.src='js/app.js?v=8';document.body.appendChild(s);
   if(dirty())push();
 })();
 })();

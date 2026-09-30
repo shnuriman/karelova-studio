@@ -90,6 +90,12 @@ const P = {
   next:    '<path d="M9.5 5.5L16 12l-6.5 6.5"/>',
   trash:   '<path d="M4 7h16M10 11v6M14 11v6"/><path d="M5 7l1 13h12l1-13"/><path d="M9 7V4h6v3"/>',
   check:   '<path d="M4 12l5.5 5.5L20 6"/>',
+  phone:   '<path d="M6.5 3.5h3l1.5 4-2 1.3a10 10 0 005.2 5.2l1.3-2 4 1.5v3a2 2 0 01-2.2 2A15.5 15.5 0 014.5 5.7a2 2 0 012-2.2z"/>',
+  link:    '<path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1"/>',
+  download:'<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/>',
+  upload:  '<path d="M12 16V5M7.5 9.5L12 5l4.5 4.5M5 20h14"/>',
+  logout:  '<path d="M9 4.5H6.5a2 2 0 00-2 2v11a2 2 0 002 2H9M14 8l4 4-4 4M18 12H9.5"/>',
+  checks:  '<path d="M3.5 12.5L8 17l6-10M13 15l1.5 1.5L21 8"/>',
 };
 const ic = n => `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
 
@@ -112,6 +118,7 @@ function render() {
 
   setTimeout(function() {
     el.innerHTML = ({ sch, cli, st, set })[S.tab]();
+    if (S.last !== S.tab) { el.scrollTop = 0; S.last = S.tab; }
     nv.style.setProperty('--i', idx);
     nv.innerHTML = TABS.map(t =>
       `<div role="button" tabindex="0" title="${t[2]}" aria-label="${t[2]}"
@@ -281,9 +288,9 @@ function cs(id) {
     ${id ? '' : '<p class="mut" data-a="mo" style="color:var(--ac2);cursor:pointer">Детальне додавання ▾</p>'}
     ${id ? `
       <div class="row" style="margin-top:12px">
-        ${c.phone ? `<a class="bt gh" style="text-decoration:none" href="tel:${esc(c.phone)}">Подзвонити</a>` : ''}
+        ${c.phone ? `<a class="bt gh" style="text-decoration:none" href="tel:${esc(c.phone)}">${ic('phone')} Подзвонити</a>` : ''}
         ${ig ? `<a class="bt gh" style="text-decoration:none" target="_blank"
-                   href="${ig.startsWith('http') ? esc(ig) : 'https://instagram.com/' + esc(ig)}">Соцмережа</a>` : ''}
+                   href="${ig.startsWith('http') ? esc(ig) : 'https://instagram.com/' + esc(ig)}">${ic('link')} Соцмережа</a>` : ''}
       </div>
       <div class="cd" style="margin-top:12px">
         <b>Витрачено: ${money(spent)}</b><br>
@@ -408,11 +415,11 @@ function set() {
     `).join('')}
     <h3 style="margin-top:22px">Дані</h3>
     <div class="row">
-      <button class="bt gh" data-a="ex">Експорт копії</button>
-      <button class="bt gh" data-a="im">Імпорт копії</button>
+      <button class="bt gh" data-a="ex">${ic('download')} Експорт копії</button>
+      <button class="bt gh" data-a="im">${ic('upload')} Імпорт копії</button>
     </div>
     <div class="row" style="margin-top:10px">
-      <button class="bt gh" data-a="lo">Вийти</button>
+      <button class="bt gh" data-a="lo">${ic('logout')} Вийти</button>
     </div>
   `;
 }
@@ -682,7 +689,7 @@ function impOpen() {
     ${'contacts' in navigator && 'ContactsManager' in window
       ? `<button class="bt" style="margin-bottom:8px" data-a="pk">${ic('imp')} Обрати з телефонної книги</button>`
       : ''}
-    <label class="bt gh" style="display:flex;justify-content:center;font-size:15px" for="fv">
+    <label class="bt gh" for="fv">
       ${ic('file')} Завантажити файл контактів
     </label>
   `);
@@ -699,8 +706,8 @@ function impList(l) {
     <h3>Знайдено: ${IMP.length}</h3>
     <div class="sr">${ic('search')}<input id="iq" placeholder="Пошук"></div>
     <div class="row" style="margin:10px 0">
-      <button class="bt gh" data-a="ia">Обрати всіх</button>
-      <button class="bt" data-a="is">Додати (<span id="icn">0</span>)</button>
+      <button class="bt gh" data-a="ia">${ic('checks')} Обрати всіх</button>
+      <button class="bt" data-a="is">${ic('plus')} Додати (<span id="icn">0</span>)</button>
     </div>
     <div id="il">${impRows('')}</div>
   `);
