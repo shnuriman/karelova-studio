@@ -140,23 +140,29 @@ const TABS = [
 ];
 
 /* ── RENDER WITH TRANSITION ─────────────────────────────────── */
-function render() {
+function render(soft) {
   const el = $('#v');
   const nv = $('#nv');
   const idx = TABS.findIndex(t => t[0] == S.tab);
 
-  // Fade out
-  el.classList.add('v-out');
-
-  setTimeout(function() {
+  const paint = function() {
+    const top = el.scrollTop;
     el.innerHTML = ({ sch, cli, st, set })[S.tab]();
-    if (S.last !== S.tab) { el.scrollTop = 0; S.last = S.tab; }
+    if (S.last !== S.tab) { el.scrollTop = 0; S.last = S.tab; } else el.scrollTop = top;
     nv.style.setProperty('--i', idx);
     nv.innerHTML = TABS.map(t =>
       `<div role="button" tabindex="0" title="${t[2]}" aria-label="${t[2]}"
             class="${S.tab == t[0] ? 'on' : ''}" data-a="tab" data-v="${t[0]}">${ic(t[1])}</div>`
     ).join('');
-    // Fade in
+  };
+
+  // «М'яке» оновлення (вибір дня, місяць): без згасання екрана
+  if (soft) { paint(); return; }
+
+  // Fade out → оновити → fade in
+  el.classList.add('v-out');
+  setTimeout(function() {
+    paint();
     el.classList.remove('v-out');
   }, 120);
 }
@@ -173,7 +179,7 @@ function setDay(on) {
   else db.sched.over[S.d] = { on: on ? 1 : 0, s: base.s, e: base.e };
   save();
   toast(on ? 'День став робочим' : 'День став вихідним');
-  render();
+  render(true);
 }
 
 function sch() {
@@ -728,7 +734,7 @@ const A = {
   dw:  () => setDay(1),
   dof: () => setDay(0),
   mt:  (v, t) => { const el = t.closest('.mo'); el.classList.toggle('open'); S.mx[v] = el.classList.contains('open'); },
-  day: v => { S.d = v; render(); },
+  day: v => { S.d = v; render(true); },
   // перехід між місяцями: нижня панель дня переходить разом з календарем
   pm:  v => {
     S.m = new Date(S.m.getFullYear(), S.m.getMonth() + +v, 1);
@@ -738,7 +744,7 @@ const A = {
       const last = new Date(y, mo + 1, 0).getDate();
       S.d = iso(new Date(y, mo, Math.min(new Date(S.d + 'T00:00').getDate(), last)));
     }
-    render();
+    render(true);
   },
   ps:  v => { S.sm = new Date(S.sm.getFullYear(), S.sm.getMonth() + +v, 1); render(); },
 
