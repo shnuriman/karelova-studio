@@ -249,7 +249,7 @@ window.addEventListener('online',()=>{if(dirty())push()});
     }
   }
   window.__DB=db;window.__SAVE=save;window.__LOGOUT=logout;
-  const s=document.createElement('script');s.src='js/app.js?v=13';document.body.appendChild(s);
+  const s=document.createElement('script');s.src='js/app.js?v=18';document.body.appendChild(s);
   if(dirty())push();
 })();
 })();

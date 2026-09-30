@@ -63,13 +63,10 @@ body {
 
 /* ── TYPOGRAPHY ──────────────────────────────────────────────── */
 h1, h3, .bt, .nav div {
-  font-family: 'Space Grotesk', Inter, sans-serif;
+  font-family: Inter, system-ui, sans-serif;
 }
 
-.slot span, .kp b, .ap b span:last-child,
-input[type=time], input[type=number], .li small {
-  font-family: 'JetBrains Mono', ui-monospace, monospace;
-}
+/* один шрифт на весь застосунок: Inter */
 
 h1 {
   font-size: 26px;
@@ -163,7 +160,7 @@ h1 > span {
   color: #ffffff;
   border-radius: var(--r-md);
   padding: 15px 20px;
-  font: 700 13px/1 'Space Grotesk', Inter, sans-serif;
+  font: 700 13px/1 Inter, system-ui, sans-serif;
   letter-spacing: .06em;
   text-transform: uppercase;
   cursor: pointer;
@@ -932,3 +929,56 @@ h1 .ib .i { width: 18px; height: 18px; }
 .off-card .ico .i { width: 24px; height: 24px; }
 .off-card .t b { display: block; font-size: 17px; font-weight: 600; }
 .off-card .t small { display: block; margin-top: 3px; font-size: 13px; color: var(--mu); }
+
+
+/* ── Нижнє меню: без чорної тіні знизу, нижче до краю екрана ─── */
+.nav {
+  box-shadow:
+    0 0 0 5px rgba(111,110,254,.06),
+    0 8px 22px -12px rgba(76,90,255,.30);
+}
+/* Встановлений застосунок (iPhone): відступ знизу менший за safe-area, меню біля індикатора «Home» */
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  .nav {
+    top: calc(var(--app-h) - var(--nav-h) - max(10px, calc(env(safe-area-inset-bottom, 0px) - 10px)));
+  }
+  #v { padding-bottom: calc(var(--nav-h) + 34px + max(10px, calc(env(safe-area-inset-bottom, 0px) - 10px))); }
+}
+
+
+/* ── Історія по місяцях: компактно ───────────────────────────── */
+.mk { grid-template-columns: repeat(4, 1fr); gap: 6px; margin-bottom: 14px; padding: 10px 12px; border-radius: 16px; background: rgba(8,11,26,.5); border: 1px solid var(--bo); }
+.mk small { font-size: 11px; margin-bottom: 2px; white-space: nowrap; }
+.mk b { font-size: 14px; white-space: nowrap; }
+.mo-b .sec { margin: 0 0 6px; }
+.wk { display: grid; gap: 2px; }
+.wr { display: flex; align-items: center; gap: 10px; padding: 7px 0; font-size: 14px; }
+.wr i { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+.wr span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wr em { font-style: normal; color: var(--mu); font-size: 13px; }
+.wr b { font-weight: 600; white-space: nowrap; min-width: 64px; text-align: right; }
+.mo .li { padding: 8px 0; }
+.mo .li:last-child { border-bottom: 0; padding-bottom: 0; }
+.mo .li small { font-family: Inter, sans-serif; font-size: 12px; }
+
+
+/* ── Бренд-аватар біля назви місяця ──────────────────────────── */
+h1 .ttl { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.av {
+  width: 32px; height: 32px; flex: none; border-radius: 11px; object-fit: cover; display: block;
+  box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 6px 16px -6px rgba(9,187,198,.55);
+}
+
+/* ── Заставка: логотип трохи більший ─────────────────────────── */
+.spl-logo { width: min(58vw, 260px); }
+
+
+/* ── Один шрифт: Inter скрізь ────────────────────────────────── */
+html, body, button, input, select, textarea, label, h1, h2, h3, b, small, span, div {
+  font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+/* Рівні цифри в сумах та часі */
+.kp b, .big, .amt, .mk b, .wr b, .li b, .slot span, .ap b span:last-child, input[type=time], input[type=number], .cd b {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum" 1, "cv11" 1;
+}

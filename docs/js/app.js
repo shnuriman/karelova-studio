@@ -195,7 +195,7 @@ function sch() {
   }
   sl += list.filter(a => a.status == 'canc').map(a => apCard(a, sv(a.svc[0]))).join('');
   const dayLabel = dt.getDate() + ' ' + MN[dt.getMonth()].toLowerCase().replace(/ь$/, 'я').replace(/й$/, 'я') + ', ' + DN[(dt.getDay() + 6) % 7];
-  return `<h1>${MN[mo]} ${y}
+  return `<h1><div class="ttl"><img class="av" src="icons/avatar.png" alt="" width="32" height="32">${MN[mo]} ${y}</div>
     <span>
       <button class="ib" data-a="pm" data-v="-1">${ic('prev')}</button>
       <button class="ib" data-a="pm" data-v="1">${ic('next')}</button>
@@ -336,12 +336,20 @@ function sum(done, ex) {
   const inc = done.reduce((s, a) => s + a.price, 0);
   const out = ex.reduce((s, e) => s + e.amount, 0);
   const cat = { Подологія: 0, Шугаринг: 0 };
+  const wk = {};
+  const add = (key, title, c, amt) => {
+    const w = wk[key] || (wk[key] = { title, cat: c, n: 0, amt: 0 });
+    w.n++; w.amt += amt;
+  };
   done.forEach(a => {
     const ss = a.svc.map(sv).filter(Boolean);
     const t = ss.reduce((x, s) => x + s.price, 0);
     ss.forEach(s => { cat[s.cat] = (cat[s.cat] || 0) + (t ? a.price * s.price / t : 0); });
+    if (!ss.length) add('-', 'Без послуги', '', a.price);
+    ss.forEach(s => add(s.id, s.title, s.cat, t ? a.price * s.price / t : a.price / ss.length));
   });
-  return { done, ex, inc, out, net: inc - out, cat, cl: new Set(done.map(a => a.cid)).size };
+  const works = Object.values(wk).sort((x, y) => y.amt - x.amt || y.n - x.n);
+  return { done, ex, inc, out, net: inc - out, cat, works, cl: new Set(done.map(a => a.cid)).size };
 }
 
 const mstat = k => sum(
@@ -355,6 +363,14 @@ const catBars = cat => {
     <div class="cr"><span>${c}</span><span>${money(cat[c])}</span></div>
     <div class="bar"><i style="width:${cat[c] / mx * 100}%;background:var(${c == 'Подологія' ? '--mi2' : '--pe2'})"></i></div>`).join('');
 };
+
+const workList = ws => ws.length
+  ? `<div class="wk">${ws.map(w => `
+      <div class="wr">
+        <i style="background:var(${w.cat == 'Подологія' ? '--mi2' : w.cat == 'Шугаринг' ? '--pe2' : '--mu'})"></i>
+        <span>${esc(w.title)}</span><em>×${w.n}</em><b>${money(w.amt)}</b>
+      </div>`).join('')}</div>`
+  : '<p class="mut" style="margin:0 0 4px">Виконаних робіт немає.</p>';
 
 function st() {
   const all = sum(db.appts.filter(a => a.status == 'done'), db.expenses);
@@ -388,8 +404,9 @@ function st() {
           <div><small>Клієнтів</small><b>${m.cl}</b></div>
           <div><small>Записів</small><b>${m.done.length}</b></div>
         </div>
-        ${catBars(m.cat)}
-        <div class="sec" style="margin:6px 0 2px">Витрати</div>
+        <div class="sec">Виконані роботи</div>
+        ${workList(m.works)}
+        <div class="sec" style="margin-top:14px">Витрати</div>
         ${m.ex.map(e => `
           <div class="li" data-a="es" data-v="${e.id}">
             <span>${esc(e.cat)}<br><small class="mut">${fdt(e.date)} ${esc(e.desc)}</small></span>
@@ -566,7 +583,17 @@ const A = {
   dof: () => setDay(0),
   mt:  (v, t) => { const el = t.closest('.mo'); el.classList.toggle('open'); S.mx[v] = el.classList.contains('open'); },
   day: v => { S.d = v; render(); },
-  pm:  v => { S.m  = new Date(S.m.getFullYear(),  S.m.getMonth()  + +v, 1); render(); },
+  // перехід між місяцями: нижня панель дня переходить разом з календарем
+  pm:  v => {
+    S.m = new Date(S.m.getFullYear(), S.m.getMonth() + +v, 1);
+    const y = S.m.getFullYear(), mo = S.m.getMonth(), t = new Date();
+    if (y == t.getFullYear() && mo == t.getMonth()) S.d = iso(t);            // поточний місяць → сьогодні
+    else {                                                                    // інший → той самий день (або останній)
+      const last = new Date(y, mo + 1, 0).getDate();
+      S.d = iso(new Date(y, mo, Math.min(new Date(S.d + 'T00:00').getDate(), last)));
+    }
+    render();
+  },
   ps:  v => { S.sm = new Date(S.sm.getFullYear(), S.sm.getMonth() + +v, 1); render(); },
 
   new:  v => apSheet('', v),
