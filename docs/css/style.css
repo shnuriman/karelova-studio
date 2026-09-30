@@ -851,6 +851,22 @@ html, body { height: auto; overflow: hidden; }
 }
 #v { padding-bottom: calc(var(--nav-h) + 40px + env(safe-area-inset-bottom, 0px)); }
 
+/* ── Sticky calendar header ─────────────────────────────────── */
+.sch-hdr {
+  position: sticky;
+  top: calc(-1px - env(safe-area-inset-top, 0px));
+  z-index: 10;
+  margin: calc(-22px - env(safe-area-inset-top, 0px)) max(-16px, calc(-1 * (100% - 488px) / 2)) 0;
+  padding: calc(18px + env(safe-area-inset-top, 0px)) max(16px, calc((100% - 488px) / 2)) 0;
+  background: rgba(6,10,20,.88);
+  backdrop-filter: blur(24px) saturate(1.6);
+  -webkit-backdrop-filter: blur(24px) saturate(1.6);
+  border-bottom: 1px solid rgba(120,130,220,.12);
+}
+.sch-hdr h1 { margin-top: 0; padding-top: 4px; }
+.sch-hdr .cd { margin-bottom: 0; border-bottom: none; border-bottom-left-radius: 0; border-bottom-right-radius: 0; box-shadow: none; }
+.sch-hdr h3 { padding-bottom: 10px; margin: 8px 0 0; }
+
 /* У звичайній вкладці браузера (панелі Safari) тримаємо меню біля нижнього краю видимої області */
 @media (display-mode: browser) {
   :root { --app-h: 100dvh; }
@@ -1128,9 +1144,22 @@ html, body, button, input, select, textarea, label, h1, h2, h3, b, small, span, 
 .ap.canc .am b, .ap.st-canc .am b { text-decoration: line-through; }
 
 /* Вільний слот по центру: «09:00 — вільно» */
-.slot { justify-content: center; gap: 8px; }
+.slot { justify-content: center; gap: 8px; padding: 9px 16px; margin-bottom: 5px; }
 .slot span { font-weight: 500; }
 .slot em::before { content: '— '; }
+
+/* Картка запису: компактніший відступ */
+.ap { padding: 10px 14px; margin-bottom: 5px; }
+.ap .am b { font-size: 14px; }
+.ap .as { margin-top: 3px; font-size: 13px; }
+.ap .ar2 em { font-size: 14px; }
+.ap .si .i { width: 16px; height: 16px; }
+
+/* Список послуг у пікері: компактніші рядки */
+.pk-r { padding: 9px 12px; }
+.pk-r .t b { font-size: 14px; }
+.pk-r .t small { font-size: 12px; }
+.sgh { padding: 6px 12px 2px; font-size: 11px; }
 
 
 /* Кількість записів над днем у календарі (верхній індекс) */
