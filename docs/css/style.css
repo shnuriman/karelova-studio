@@ -1070,3 +1070,72 @@ html, body, button, input, select, textarea, label, h1, h2, h3, b, small, span, 
 .qt button:active { transform: scale(.9); }
 .qt span { min-width: 16px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
 .sv-c .ib { width: 36px; height: 36px; flex: 0 0 36px !important; }
+
+
+/* ── Форма запису: легший, акуратніший вигляд ───────────────── */
+.pn .i { stroke-width: 1.6; }
+.pn .sh-h h3 { font-weight: 600; font-size: 17px; }
+.pn .ib.dl { width: 38px; height: 38px; flex: 0 0 38px !important; }
+.pn .ib.dl .i { width: 17px; height: 17px; }
+
+.pn label { font: 400 12.5px/1 Inter, sans-serif; margin: 14px 0 7px; }
+.pn input:not([type=checkbox]), .pn select, .pn textarea { font-size: 15px; font-weight: 400; padding: 12px 14px; border-radius: 14px; }
+.pn textarea { min-height: 76px; }
+
+.fh { font: 600 15px/1.2 Inter, system-ui, sans-serif; gap: 9px; margin: 24px 0 4px; }
+.fh .i { width: 18px; height: 18px; }
+.fld input { padding-right: 44px; font-weight: 400; }
+.fld > .i, .fld .ck .i { width: 18px; height: 18px; }
+.fld > .i { right: 15px; }
+.fld input[type=date], .fld input[type=time] { min-height: 46px; text-align: left; font-variant-numeric: tabular-nums; }
+.fld input::-webkit-date-and-time-value { text-align: left; }
+.fld .sf { font-size: 14px; }
+
+.sg { padding: 11px 14px; }
+.sg b { font-weight: 500; font-size: 14.5px; }
+.sg small { font-size: 12.5px; }
+.sgh { font-weight: 500; }
+
+.rc { padding: 9px 14px; border-radius: 12px; font: 500 13.5px/1 Inter, sans-serif; }
+
+.sv-c { padding: 10px 10px 10px 14px; border-radius: 14px; border-left-width: 2px; }
+.sv-c .t b { font-size: 14.5px; font-weight: 500; }
+.sv-c .t small { font-size: 12px; }
+.qt { gap: 4px; }
+.qt button { width: 30px; height: 30px; border-radius: 9px; background: rgba(255,255,255,.06); }
+.qt button .i { width: 15px; height: 15px; }
+.qt span { font-weight: 500; font-size: 14.5px; min-width: 18px; }
+.sv-c .ib { width: 32px; height: 32px; flex: 0 0 32px !important; background: rgba(255,120,110,.07); border-color: rgba(255,130,120,.22); color: #ff9a8a; }
+.sv-c .ib .i { width: 15px; height: 15px; }
+
+.pn .bt { min-height: 48px; font: 500 15px/1 Inter, system-ui, sans-serif; }
+.pn .bt .i { width: 17px; height: 17px; stroke-width: 1.6; }
+.pn .bt.gh { box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
+
+
+/* ── Картка запису в графіку ─────────────────────────────────── */
+.ap { display: flex; align-items: stretch; gap: 12px; padding: 14px 16px 14px 14px; }
+.ap .abar { flex: none; width: 4px; border-radius: 4px; background: var(--mi2); opacity: .7; }
+.ap.pe .abar { background: var(--pe2); }
+.ap .am { flex: 1; min-width: 0; }
+.ap .am b { display: block; margin: 0; font: 600 15px/1.35 Inter, system-ui, sans-serif; overflow-wrap: anywhere; }
+.ap .as { margin-top: 5px; color: var(--mu); font-size: 13.5px; line-height: 1.5; }
+.ap .ar2 { flex: none; display: flex; flex-direction: column; justify-content: space-between; align-items: flex-end; gap: 10px; }
+.ap .ar2 em { font-style: normal; font: 600 15px/1 Inter, system-ui, sans-serif; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.ap .si .i { width: 17px; height: 17px; stroke-width: 1.6; display: block; color: var(--mu); }
+.ap.st-done .si .i { color: var(--inc, #63d9a6); }
+.ap.canc .am b, .ap.st-canc .am b { text-decoration: line-through; }
+
+/* Вільний слот по центру: «09:00 — вільно» */
+.slot { justify-content: center; gap: 8px; }
+.slot span { font-weight: 500; }
+.slot em::before { content: '— '; }
+
+
+/* Кількість записів над днем у календарі (верхній індекс) */
+.cal .dy .dn { position: relative; display: inline-block; font: inherit; letter-spacing: 0; color: inherit; padding: 0; }
+.cal .dy sup { position: absolute; left: 100%; top: -5px; margin-left: 1px; font: 600 9px/1 Inter, system-ui, sans-serif; color: var(--ac2); font-variant-numeric: tabular-nums; }
+.cal .dy.sel sup { color: #fff; }
+.cal .dy.off sup { opacity: .6; }
+
+.cal .dy.sel, .cal .dy.today.sel { color: #fff; }

@@ -118,6 +118,7 @@ const P = {
   work:    '<rect x="3.5" y="7.5" width="17" height="12" rx="3"/><path d="M9 7.5V6a2 2 0 012-2h2a2 2 0 012 2v1.5M3.5 12.5h17"/>',
   x:       '<path d="M6 6l12 12M18 6L6 18"/>',
   checks:  '<path d="M3.5 12.5L8 17l6-10M13 15l1.5 1.5L21 8"/>',
+  minus:   '<path d="M5 12h14"/>',
   clock:   '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   flag:    '<path d="M6 21V4M6 5h11l-2.5 4L17 13H6"/>',
   cash:    '<rect x="3" y="6.5" width="18" height="11" rx="3"/><circle cx="12" cy="12" r="2.5"/>',
@@ -190,10 +191,10 @@ function sch() {
     '<i></i>'.repeat((new Date(y, mo, 1).getDay() + 6) % 7);
   for (let i = 1; i <= n; i++) {
     const id = iso(new Date(y, mo, i));
-    const c = db.appts.some(a => a.date == id && a.status != 'canc');
+    const c = db.appts.filter(a => a.date == id && a.status != 'canc').length;
     const off = !dcfg(id).on;
     cells += `<b class="dy ${id == S.d ? 'sel' : ''} ${id == today ? 'today' : ''} ${off ? 'off' : ''}"
-                 data-a="day" data-v="${id}">${i}${c ? '<u></u>' : ''}</b>`;
+                 data-a="day" data-v="${id}"><span class="dn">${i}${c ? `<sup>${c}</sup>` : ''}</span></b>`;
   }
   const dt  = new Date(S.d + 'T00:00');
   const cfg = dcfg(S.d);
@@ -235,10 +236,21 @@ function sch() {
 }
 
 function apCard(a, s0) {
-  return `<div class="ap ${s0 ? cls(s0.cat) : 'pe'} ${a.status == 'canc' ? 'canc' : ''}"
-               data-a="edit" data-v="${a.id}">
-    <b><span>${esc(cn(a.cid))}</span><span>${money(a.price)}</span></b>
-    <small>${a.start}–${ft(tm(a.start) + a.dur)} · ${esc(svTitle(a))} · ${ST[a.status]}</small>
+  const icn = { plan: 'clock', done: 'check', canc: 'x' }[a.status] || 'clock';
+  const lines = [...svCount(a.svc)].map(([i, n]) => {
+    const x = sv(i);
+    return x ? esc(x.title) + (n > 1 ? ' ×' + n : '') : '';
+  }).filter(Boolean).join('<br>') || 'Без послуги';
+  return `<div class="ap ${s0 ? cls(s0.cat) : 'pe'} st-${a.status}" data-a="edit" data-v="${a.id}">
+    <i class="abar"></i>
+    <div class="am">
+      <b>${a.start} – ${ft(tm(a.start) + a.dur)} · ${esc(cn(a.cid))}</b>
+      <div class="as">${lines}</div>
+    </div>
+    <div class="ar2">
+      <span class="si" title="${ST[a.status] || ''}">${ic(icn)}</span>
+      <em>${money(a.price)}</em>
+    </div>
   </div>`;
 }
 
@@ -252,9 +264,9 @@ function svHtml() {
     return `<div class="sv-c ${cls(x.cat)}">
       <div class="t"><b>${esc(x.title)}</b><small>${money(x.price)} · ${dm(x.dur)}</small></div>
       <div class="qt">
-        <button type="button" data-a="qty" data-v="${id}|-1" aria-label="Менше">−</button>
+        <button type="button" data-a="qty" data-v="${id}|-1" aria-label="Менше">${ic('minus')}</button>
         <span>${n}</span>
-        <button type="button" data-a="qty" data-v="${id}|1" aria-label="Більше">+</button>
+        <button type="button" data-a="qty" data-v="${id}|1" aria-label="Більше">${ic('plus')}</button>
       </div>
       <button type="button" class="ib dl" data-a="rsv" data-v="${id}" aria-label="Прибрати">${ic('trash')}</button>
     </div>`;
