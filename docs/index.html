@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=18">
+  <link rel="stylesheet" href="css/style.css?v=19">
 </head>
 <body>
 
@@ -98,9 +98,13 @@
     if(!st) return;
     function set(){
       var p = matchMedia('(orientation: portrait)').matches;
-      var a = Math.max(screen.width, screen.height), b = Math.min(screen.width, screen.height);
-      var h = Math.max(window.innerHeight, p ? a : b);
-      document.documentElement.style.setProperty('--app-h', h + 'px');
+      var full = p ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
+      var ih = window.innerHeight;
+      var root = document.documentElement.style;
+      // сторінці належить лише innerHeight: усе, що нижче, iOS обрізає
+      root.setProperty('--app-h', ih + 'px');
+      // скільки px знизу екрана iOS не віддає сторінці (0 на нормальних пристроях)
+      root.setProperty('--strip', Math.max(0, full - ih) + 'px');
     }
     set();
     addEventListener('resize', set);
@@ -109,6 +113,6 @@
   })();
   </script>
   <script src="config.js"></script>
-  <script src="js/cloud.js?v=18"></script>
+  <script src="js/cloud.js?v=19"></script>
 </body>
 </html>

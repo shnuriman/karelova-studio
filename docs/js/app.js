@@ -195,7 +195,7 @@ function sch() {
   }
   sl += list.filter(a => a.status == 'canc').map(a => apCard(a, sv(a.svc[0]))).join('');
   const dayLabel = dt.getDate() + ' ' + MN[dt.getMonth()].toLowerCase().replace(/ь$/, 'я').replace(/й$/, 'я') + ', ' + DN[(dt.getDay() + 6) % 7];
-  return `<h1><div class="ttl"><img class="av" src="icons/avatar.png" alt="" width="32" height="32">${MN[mo]} ${y}</div>
+  return `<h1>${MN[mo]} ${y}
     <span>
       <button class="ib" data-a="pm" data-v="-1">${ic('prev')}</button>
       <button class="ib" data-a="pm" data-v="1">${ic('next')}</button>

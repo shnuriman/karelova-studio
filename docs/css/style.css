@@ -962,13 +962,6 @@ h1 .ib .i { width: 18px; height: 18px; }
 .mo .li small { font-family: Inter, sans-serif; font-size: 12px; }
 
 
-/* ── Бренд-аватар біля назви місяця ──────────────────────────── */
-h1 .ttl { display: flex; align-items: center; gap: 10px; min-width: 0; }
-.av {
-  width: 32px; height: 32px; flex: none; border-radius: 11px; object-fit: cover; display: block;
-  box-shadow: 0 0 0 1px rgba(255,255,255,.10), 0 6px 16px -6px rgba(9,187,198,.55);
-}
-
 /* ── Заставка: логотип трохи більший ─────────────────────────── */
 .spl-logo { width: min(58vw, 260px); }
 
@@ -981,4 +974,23 @@ html, body, button, input, select, textarea, label, h1, h2, h3, b, small, span, 
 .kp b, .big, .amt, .mk b, .wr b, .li b, .slot span, .ap b span:last-child, input[type=time], input[type=number], .cd b {
   font-variant-numeric: tabular-nums;
   font-feature-settings: "tnum" 1, "cv11" 1;
+}
+
+
+/* ── Меню повністю в межах видимої області (iOS обрізає все нижче innerHeight) ── */
+:root { --strip: 0px; }
+@media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  .nav {
+    top: auto; margin-bottom: 0;
+    bottom: max(10px, calc(env(safe-area-inset-bottom, 0px) - 10px - var(--strip, 0px)));
+  }
+  #v { padding-bottom: calc(var(--nav-h) + 34px + max(10px, calc(env(safe-area-inset-bottom, 0px) - 10px - var(--strip, 0px)))); }
+}
+/* Фон плавно переходить у колір «полотна», щоб не було видно шва внизу */
+.bg {
+  background:
+    linear-gradient(to top, var(--bg) 0, rgba(6,10,20,0) 160px),
+    radial-gradient(ellipse 620px 460px at 105% -8%, rgba(144,133,255,.20), transparent 70%),
+    radial-gradient(ellipse 520px 520px at -12% 60%, rgba(76,169,255,.13), transparent 70%),
+    var(--bg);
 }
