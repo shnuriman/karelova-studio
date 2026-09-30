@@ -9,26 +9,157 @@ try{sess=JSON.parse(localStorage.getItem(SK))}catch(e){}
 const now=()=>Math.floor(Date.now()/1000);
 const authErr=()=>Object.assign(new Error('auth'),{auth:true});
 
+// ---------- SVG логотип (бренд-кольори)
+const LOGO_SVG=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 511.21 142.8" style="width:100%;max-width:220px;height:auto;display:block;margin:0 auto"><defs><style>.lg-a{fill:#09bbc6}.lg-w{fill:#fff}.lg-b{fill:#00b4b1}</style></defs><g><g><path class="lg-w" d="M17.63,5.53v36.07l7.35-8.28L51.16,5.53h22.31l-33.13,34.73,35.26,58.77h-20.57l-27.38-45.68-10.02,10.55v35.13H0V5.53h17.63Z"/><path class="lg-w" d="M114.66,97.69c-3.87,2.14-8.15,3.21-12.96,3.21-6.54,0-11.89-1.87-16.03-5.74-4.14-3.74-6.28-8.68-6.28-14.96s2.14-11.35,6.41-14.83c4.14-3.47,9.88-5.74,17.23-6.68l19.9-2.67v-3.34c0-6.68-4.14-10.02-12.42-10.02-3.61,0-6.41.67-8.42,2.14-2.14,1.47-3.21,3.21-3.21,5.34,0,.93,0,1.47.13,1.87l-15.9,1.74c-.13-.8-.27-2-.27-3.47,0-3.47,1.07-6.68,3.34-9.62,2.27-2.94,5.48-5.34,9.62-7.08,4.14-1.74,9.08-2.67,14.69-2.67,9.48,0,16.7,2,21.77,6.01,4.94,4.01,7.48,10.02,7.48,18.03v27.65c0,6.54.67,12.02,2.14,16.43h-16.7c-.94-3.61-1.34-7.08-1.34-10.55-2.27,4.14-5.34,7.21-9.22,9.22ZM122.94,68.84v-1.2l-16.03,2.27c-3.74.54-6.54,1.47-8.28,2.94-1.87,1.47-2.81,3.61-2.81,6.41,0,2.54.94,4.54,2.67,5.88,1.74,1.47,4.01,2.14,6.81,2.14,5.21,0,9.35-1.6,12.69-4.67s4.94-7.61,4.94-13.76Z"/><path class="lg-w" d="M174.46,52.15c-2.94,3.74-4.41,8.42-4.41,14.16v32.73h-16.83V32.78h16.83v10.55c2-3.87,4.54-6.95,7.61-9.22,3.07-2.14,6.68-3.21,10.82-3.21,2.14,0,4.01.27,5.74.8l-2.67,15.9c-1.74-.67-3.47-.93-5.48-.93-4.94,0-8.82,1.87-11.62,5.48Z"/><path class="lg-w" d="M230.37,86.47c4.14,0,7.35-.8,9.62-2.27,2.27-1.47,4.68-3.74,7.21-6.81l13.36,6.68c-3.34,5.74-7.48,10.02-12.29,12.69-4.94,2.8-10.95,4.14-18.17,4.14-6.14,0-11.75-1.47-16.96-4.41s-9.35-7.08-12.42-12.42c-3.07-5.34-4.68-11.35-4.68-18.17s1.6-12.96,4.68-18.3c3.07-5.21,7.35-9.35,12.69-12.29,5.21-2.94,11.09-4.41,17.5-4.41s11.75,1.34,16.7,4.14c4.94,2.8,8.68,6.81,11.49,11.75,2.8,5.08,4.14,10.82,4.14,17.23v5.88h-51.03c.53,5.08,2.4,9.08,5.74,12.02,3.34,3.07,7.48,4.54,12.42,4.54ZM212.47,57.09h35.13c-.8-4.14-2.67-7.48-5.74-9.88-3.07-2.27-6.81-3.47-11.49-3.47-4.27,0-8.01,1.2-11.22,3.74-3.21,2.54-5.48,5.74-6.68,9.62Z"/><path class="lg-w" d="M290.34,99.03h-16.83V5.53h16.83v93.5Z"/><path class="lg-w" d="M354.56,96.89c-5.61,2.67-11.49,4.01-17.77,4.01s-12.16-1.34-17.63-4.01c-5.61-2.67-10.15-6.68-13.49-12.02-3.34-5.21-5.08-11.62-5.08-18.97s1.74-13.76,5.08-19.1c3.34-5.21,7.88-9.22,13.49-11.89,5.48-2.67,11.35-4.01,17.63-4.01s12.16,1.34,17.77,4.01c5.48,2.67,10.02,6.68,13.36,11.89,3.34,5.34,5.08,11.75,5.08,19.1s-1.74,13.76-5.08,18.97c-3.34,5.34-7.88,9.35-13.36,12.02ZM353.23,76.05c1.74-2.8,2.67-6.28,2.67-10.15s-.94-7.35-2.67-10.29c-1.74-2.81-4.14-5.08-6.95-6.68-2.94-1.47-6.14-2.27-9.48-2.27s-6.54.8-9.35,2.27c-2.94,1.6-5.34,3.87-7.08,6.68-1.74,2.94-2.67,6.41-2.67,10.29s.94,7.35,2.67,10.15c1.74,2.94,4.14,5.21,7.08,6.68,2.81,1.6,6.01,2.41,9.35,2.41s6.55-.8,9.48-2.41c2.81-1.47,5.21-3.74,6.95-6.68Z"/><path class="lg-w" d="M372.83,32.78h17.9l16.83,44.88,16.83-44.88h17.9l-26.85,66.25h-15.76l-26.85-66.25Z"/><g><path class="lg-b" d="M460.01,1.43c2.69-2.91,10.91-1,12.68,2.37,1.68,3.21.52,12.03-2.2,14.58-1.99,1.86-6.21,2.06-8.41.47-1.57-1.13-2.17-3.63-2.56-5.44-.66-3.07-1.81-9.5.5-11.98Z"/><path class="lg-b" d="M481.2,6.73c3.03-.34,6.82,2.63,7,5.75s-2.51,9.72-6.16,10.05-5.27-1.94-5.6-5.25c-.34-3.37.4-10.06,4.76-10.55Z"/><path class="lg-b" d="M493.15,15.23c1.78-.24,4.7,1.71,5.18,3.39.88,3.12-1.6,9.41-5.35,9.55-7.17.27-4.26-12.34.17-12.94Z"/><path class="lg-b" d="M501.28,25.31c2.37-.72,4.72,1.22,4.76,3.62.04,2.11-2.86,6.06-5.14,5.95-4.46-.21-2.77-8.61.38-9.57Z"/><path class="lg-b" d="M507.98,33.17c1.42-.38,2.51.8,3,2.02,1.53,3.74-5.1,7.79-6.14,3.41-.3-1.25,1.7-5.05,3.14-5.43Z"/></g><g><path class="lg-a" d="M460.01,1.43c2.69-2.91,10.91-1,12.68,2.37,1.68,3.21.52,12.03-2.2,14.58-1.99,1.86-6.21,2.06-8.41.47-1.57-1.13-2.17-3.63-2.56-5.44-.66-3.07-1.81-9.5.5-11.98Z"/><path class="lg-a" d="M481.2,6.73c3.03-.34,6.82,2.63,7,5.75s-2.51,9.72-6.16,10.05-5.27-1.94-5.6-5.25c-.34-3.37.4-10.06,4.76-10.55Z"/><path class="lg-a" d="M493.15,15.23c1.78-.24,4.7,1.71,5.18,3.39.88,3.12-1.6,9.41-5.35,9.55-7.17.27-4.26-12.34.17-12.94Z"/><path class="lg-a" d="M501.28,25.31c2.37-.72,4.72,1.22,4.76,3.62.04,2.11-2.86,6.06-5.14,5.95-4.46-.21-2.77-8.61.38-9.57Z"/><path class="lg-a" d="M507.98,33.17c1.42-.38,2.51.8,3,2.02,1.53,3.74-5.1,7.79-6.14,3.41-.3-1.25,1.7-5.05,3.14-5.43Z"/></g><path class="lg-a" d="M496.13,36.91c-5.08-4-12.29-6.01-21.77-6.01-5.61,0-10.56.94-14.7,2.67-4.14,1.74-7.34,4.14-9.61,7.08-2.27,2.94-3.34,6.15-3.34,9.62,0,1.47.13,2.67.26,3.47l15.76-1.72h0v-1.88c0-2.14,1.06-3.88,3.2-5.35,2.01-1.46,4.81-2.13,8.42-2.13,8.28,0,12.42,3.34,12.42,10.02v16.16c0,6.14-1.6,10.68-4.94,13.76-3.34,3.07-7.48,4.67-12.69,4.67-2.81,0-5.08-.67-6.81-2.14-1.74-1.33-2.68-3.34-2.68-5.87,0-2.81.94-4.95,2.81-6.41,1.74-1.47,4.54-2.41,8.28-2.94l15.75-2.23-2.71-11.27-16.91,2.28c-7.35.93-13.09,3.2-17.23,6.68-4.28,3.47-6.42,8.41-6.42,14.82s2.14,11.22,6.28,14.96c4.14,3.88,11.01,6.44,17.56,6.44,23.64.02,35.18-8.27,35.05-46.4-.03-8.02-1.05-14.27-5.99-18.28Z"/></g></g></svg>`;
+
+// ---------- Стилі вікна входу (вбудовані, щоб не залежати від style.css до завантаження)
+const LOGIN_CSS=`
+  @keyframes kr-fadein{from{opacity:0;transform:translateY(20px) scale(.97)}to{opacity:1;transform:none}}
+  @keyframes kr-glow{0%,100%{opacity:.5}50%{opacity:1}}
+  #kr-ov{
+    position:fixed;inset:0;z-index:99999;
+    background:radial-gradient(ellipse 800px 600px at 50% -10%,rgba(9,187,198,.18),transparent 65%),
+               radial-gradient(ellipse 600px 500px at 10% 80%,rgba(91,130,255,.12),transparent 65%),
+               #090d16;
+    display:none;align-items:center;justify-content:center;
+    padding:24px;
+    font:15px/1.5 Inter,system-ui,-apple-system,sans-serif;
+    color:#e8ecf4;
+    overflow:auto;
+  }
+  #kr-card{
+    width:100%;max-width:360px;
+    background:linear-gradient(160deg,rgba(20,30,52,.75),rgba(10,16,32,.55));
+    backdrop-filter:blur(32px) saturate(1.6);
+    -webkit-backdrop-filter:blur(32px) saturate(1.6);
+    border:1px solid rgba(65,95,150,.3);
+    border-radius:28px;
+    padding:36px 32px 32px;
+    box-shadow:0 32px 80px -20px rgba(0,0,0,.9),inset 0 1px 0 rgba(255,255,255,.08);
+    animation:kr-fadein .55s cubic-bezier(.2,.8,.2,1) both;
+  }
+  #kr-logo-wrap{
+    margin:0 auto 28px;
+    padding:16px 20px 14px;
+    background:rgba(9,187,198,.06);
+    border:1px solid rgba(9,187,198,.15);
+    border-radius:16px;
+  }
+  #kr-sub{
+    text-align:center;
+    font:500 13px/1 Inter,sans-serif;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:rgba(9,187,198,.7);
+    margin-bottom:28px;
+  }
+  #kr-divider{
+    height:1px;
+    background:linear-gradient(90deg,transparent,rgba(65,95,150,.35),transparent);
+    margin-bottom:24px;
+  }
+  .kr-label{
+    display:block;
+    font:700 11px/1 Inter,sans-serif;
+    letter-spacing:.08em;
+    text-transform:uppercase;
+    color:rgba(126,139,166,.9);
+    margin:0 0 8px;
+  }
+  .kr-inp{
+    width:100%;box-sizing:border-box;
+    padding:14px 16px;
+    margin-bottom:18px;
+    background:rgba(8,14,26,.7);
+    border:1px solid rgba(65,95,150,.3);
+    border-radius:14px;
+    color:#e8ecf4;
+    font:15px/1 Inter,sans-serif;
+    outline:none;
+    transition:border-color .2s,box-shadow .2s,background .2s;
+    -webkit-appearance:none;appearance:none;
+  }
+  .kr-inp:focus{
+    border-color:rgba(91,130,255,.65);
+    background:rgba(91,130,255,.06);
+    box-shadow:0 0 0 3px rgba(91,130,255,.18),inset 0 2px 6px rgba(0,0,0,.15);
+  }
+  .kr-inp::placeholder{color:rgba(126,139,166,.45)}
+  #kr-err{
+    font:500 13px/1.5 Inter,sans-serif;
+    color:#ff8a80;
+    min-height:18px;
+    margin:-10px 0 14px;
+    text-align:center;
+  }
+  #kr-btn{
+    width:100%;padding:16px;
+    border:none;border-radius:14px;
+    background:linear-gradient(135deg,#5b82ff 0%,#4369f6 100%);
+    color:#fff;
+    font:700 14px/1 'Space Grotesk',Inter,sans-serif;
+    letter-spacing:.06em;
+    text-transform:uppercase;
+    cursor:pointer;
+    box-shadow:0 4px 16px rgba(67,105,246,.35),inset 0 1px 0 rgba(255,255,255,.2);
+    transition:transform .2s cubic-bezier(.3,1.6,.5,1),box-shadow .2s;
+  }
+  #kr-btn:active{transform:scale(.97);box-shadow:0 2px 8px rgba(67,105,246,.25)}
+  #kr-btn:disabled{opacity:.55;cursor:default;transform:none}
+`;
+
 // ---------- екран входу / повідомлень
+const styleEl=document.createElement('style');
+styleEl.textContent=LOGIN_CSS;
+document.head.appendChild(styleEl);
+
 const ov=document.createElement('div');
-ov.style.cssText='position:fixed;inset:0;z-index:99999;background:#060d14;color:#e8f1f5;display:none;align-items:center;justify-content:center;padding:24px;font:16px Inter,system-ui,sans-serif';
+ov.id='kr-ov';
 document.body.appendChild(ov);
+
 const badge=document.createElement('div');
 badge.style.cssText='position:fixed;top:calc(env(safe-area-inset-top,0px) + 6px);right:8px;z-index:9999;font:600 11px Inter,system-ui,sans-serif;padding:4px 8px;border-radius:10px;background:#c0392b;color:#fff;display:none';
 badge.textContent='Не збережено на сервері';document.body.appendChild(badge);
-const inp='width:100%;box-sizing:border-box;padding:14px;margin:6px 0 12px;border-radius:12px;border:1px solid #244;background:#0d1a24;color:#fff;font-size:16px';
-const btn='width:100%;padding:14px;border:0;border-radius:12px;background:#09bbc6;color:#04222a;font-weight:600;font-size:16px';
+
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
-const show=h=>{ov.innerHTML='<div style="width:100%;max-width:340px">'+h+'</div>';ov.style.display='flex'};
+
+const show=h=>{ov.innerHTML='<div id="kr-card">'+h+'</div>';ov.style.display='flex'};
 const hide=()=>{ov.style.display='none'};
-const msg=(t,retry)=>show('<h2 style="margin:0 0 12px">Karelova Studio</h2><p style="line-height:1.5">'+esc(t)+'</p>'+(retry?'<button id="kr-r" style="'+btn+'">Спробувати ще</button>':''))||(retry&&document.getElementById('kr-r').addEventListener('click',()=>location.reload()));
+
+const btnHtml='width:100%;padding:14px;border:0;border-radius:14px;background:linear-gradient(135deg,#5b82ff,#4369f6);color:#fff;font:700 13px/1 Inter,sans-serif;letter-spacing:.06em;text-transform:uppercase;cursor:pointer';
+
+const msg=(t,retry)=>show(
+  `<div id="kr-logo-wrap">${LOGO_SVG}</div>
+   <div id="kr-sub">CRM System</div>
+   <div id="kr-divider"></div>
+   <p style="line-height:1.6;margin:0 0 20px;text-align:center;color:rgba(232,236,244,.75)">${esc(t)}</p>`+
+  (retry?`<button id="kr-r" style="${btnHtml}">Спробувати ще</button>`:'')
+)||(retry&&document.getElementById('kr-r').addEventListener('click',()=>location.reload()));
 
 function login(){return new Promise(res=>{
-  show('<h2 style="margin:0 0 16px">Karelova Studio</h2><label>Email</label><input id="kr-e" type="email" autocomplete="username" style="'+inp+'"><label>Пароль</label><input id="kr-p" type="password" autocomplete="current-password" style="'+inp+'"><div id="kr-x" style="color:#ff8a80;min-height:20px;margin-bottom:8px"></div><button id="kr-b" style="'+btn+'">Увійти</button>');
-  const go=async()=>{const x=document.getElementById('kr-x');x.textContent='';
-    try{await auth('password',{email:document.getElementById('kr-e').value.trim(),password:document.getElementById('kr-p').value});hide();res()}
-    catch(e){x.textContent=e.auth?'Невірний email або пароль':'Немає зв\u2019язку з сервером'}};
-  document.getElementById('kr-b').addEventListener('click',go);
+  show(`
+    <div id="kr-logo-wrap">${LOGO_SVG}</div>
+    <div id="kr-sub">CRM System</div>
+    <div id="kr-divider"></div>
+    <label class="kr-label">Email</label>
+    <input id="kr-e" class="kr-inp" type="email" autocomplete="username" placeholder="your@email.com">
+    <label class="kr-label">Пароль</label>
+    <input id="kr-p" class="kr-inp" type="password" autocomplete="current-password" placeholder="••••••••">
+    <div id="kr-err"></div>
+    <button id="kr-btn">Увійти</button>
+  `);
+  const go=async()=>{
+    const x=document.getElementById('kr-err'),b=document.getElementById('kr-btn');
+    x.textContent='';b.disabled=true;b.textContent='Вхід...';
+    try{
+      await auth('password',{email:document.getElementById('kr-e').value.trim(),password:document.getElementById('kr-p').value});
+      hide();res();
+    }catch(e){
+      x.textContent=e.auth?'Невірний email або пароль':'Немає зв\u2019язку з сервером';
+      b.disabled=false;b.textContent='Увійти';
+    }
+  };
+  document.getElementById('kr-btn').addEventListener('click',go);
   document.getElementById('kr-p').addEventListener('keydown',e=>{if(e.key=='Enter')go()});
 })}
 
@@ -58,7 +189,7 @@ const dirty=()=>localStorage.getItem(DK)=='1';
 function setDirty(v){if(v)localStorage.setItem(DK,'1');else localStorage.removeItem(DK);badge.style.display=v&&!busy?'block':'none'}
 
 function conflict(){
-  alert('Дані на сервері змінені з іншого пристрою. Сторінку буде оновлено, щоб не втратити ті зміни. Ваші останні правки на цьому пристрої можуть не зберегтися.');
+  alert('\u0414\u0430\u043d\u0456 \u043d\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0456 \u0437\u043c\u0456\u043d\u0435\u043d\u0456 \u0437 \u0456\u043d\u0448\u043e\u0433\u043e \u043f\u0440\u0438\u0441\u0442\u0440\u043e\u044e. \u0421\u0442\u043e\u0440\u0456\u043d\u043a\u0443 \u0431\u0443\u0434\u0435 \u043e\u043d\u043e\u0432\u043b\u0435\u043d\u043e, \u0449\u043e\u0431 \u043d\u0435 \u0432\u0442\u0440\u0430\u0442\u0438\u0442\u0438 \u0442\u0456 \u0437\u043c\u0456\u043d\u0438. \u0412\u0430\u0448\u0456 \u043e\u0441\u0442\u0430\u043d\u043d\u0456 \u043f\u0440\u0430\u0432\u043a\u0438 \u043d\u0430 \u0446\u044c\u043e\u043c\u0443 \u043f\u0440\u0438\u0441\u0442\u0440\u043e\u0457 \u043c\u043e\u0436\u0443\u0442\u044c \u043d\u0435 \u0437\u0431\u0435\u0440\u0435\u0433\u0442\u0438\u0441\u044f.');
   localStorage.removeItem(K);setDirty(false);location.reload();
 }
 async function push(){
@@ -67,17 +198,14 @@ async function push(){
   try{
     const t=await token(),h={...H(t),Prefer:'return=representation'};let r,j;
     if(ver===0){
-      // Спочатку пробуємо INSERT (новий акаунт)
       r=await fetch(T,{method:'POST',headers:h,body:JSON.stringify({data:db,version:1})});
       if(r.status==401)throw authErr();
       if(r.status==409){
-        // Рядок вже існує (інший пристрій / нова сесія) — читаємо актуальну версію
         const rv=await fetch(T+'?select=version',{headers:H(t)});
         if(rv.status==401)throw authErr();
         const ra=rv.ok?await rv.json():[];
         if(!ra.length){busy=false;setDirty(true);return}
         ver=ra[0].version;
-        // Тепер робимо PATCH з актуальною версією
         r=await fetch(T+'?version=eq.'+ver,{method:'PATCH',headers:h,body:JSON.stringify({data:db,version:ver+1})});
         if(r.status==401)throw authErr();
         if(!r.ok)throw new Error('server');
@@ -113,7 +241,7 @@ function save(d){
   setDirty(true);clearTimeout(timer);timer=setTimeout(push,600);
 }
 function logout(){
-  if(dirty()&&!confirm('\u0454 \u0437\u043c\u0456\u043d\u0438, \u044f\u043a\u0456 \u0449\u0435 \u043d\u0435 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u043d\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0456. \u0412\u0438\u0439\u0442\u0438 \u0432\u0441\u0435 \u043e\u0434\u043d\u043e?'))return;
+  if(dirty()&&!confirm('\u0404 \u0437\u043c\u0456\u043d\u0438, \u044f\u043a\u0456 \u0449\u0435 \u043d\u0435 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u043d\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0456. \u0412\u0438\u0439\u0442\u0438 \u0432\u0441\u0435 \u043e\u0434\u043d\u043e?'))return;
   [SK,K,VK,DK].forEach(k=>localStorage.removeItem(k));location.reload();
 }
 
@@ -134,13 +262,13 @@ window.addEventListener('online',()=>{if(dirty())push()});
     try{
       const s=await loadRemote(),c=cache(),cv=+localStorage.getItem(VK)||0;
       ver=s.version;
-      if(c&&dirty()&&cv===s.version){db=c}          // локальні незбережені правки на актуальній версії
+      if(c&&dirty()&&cv===s.version){db=c}
       else{db=s.data;if(c&&dirty())alert('\u041b\u043e\u043a\u0430\u043b\u044c\u043d\u0456 \u043d\u0435\u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u0437\u043c\u0456\u043d\u0438 \u0432\u0456\u0434\u043a\u0438\u043d\u0443\u0442\u043e: \u0434\u0430\u043d\u0456 \u043d\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0456 \u043d\u043e\u0432\u0456\u0448\u0456.');setDirty(false)}
       if(db){try{localStorage.setItem(K,JSON.stringify(db));localStorage.setItem(VK,String(ver))}catch(e){}}
       break;
     }catch(e){
       if(e.auth){sess=null;localStorage.removeItem(SK);continue}
-      const c=cache();                              // офлайн: працюємо з кешу
+      const c=cache();
       if(c){db=c;ver=+localStorage.getItem(VK)||0;break}
       return msg('\u041d\u0435\u043c\u0430\u0454 \u0437\u0432\u2019\u044f\u0437\u043a\u0443 \u0437 \u0441\u0435\u0440\u0432\u0435\u0440\u043e\u043c, \u0430 \u043b\u043e\u043a\u0430\u043b\u044c\u043d\u0438\u0445 \u0434\u0430\u043d\u0438\u0445 \u043d\u0430 \u0446\u044c\u043e\u043c\u0443 \u043f\u0440\u0438\u0441\u0442\u0440\u043e\u0457 \u0449\u0435 \u043d\u0435\u043c\u0430\u0454.',true);
     }
