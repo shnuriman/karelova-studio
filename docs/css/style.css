@@ -994,3 +994,26 @@ html, body, button, input, select, textarea, label, h1, h2, h3, b, small, span, 
     radial-gradient(ellipse 520px 520px at -12% 60%, rgba(76,169,255,.13), transparent 70%),
     var(--bg);
 }
+
+
+/* ── Прийоми в історії місяця ────────────────────────────────── */
+.ar { display: flex; align-items: center; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.ar:last-child { border-bottom: 0; }
+.ar:active { opacity: .7; }
+.ar .dt { width: 44px; height: 44px; flex: none; border-radius: 14px; display: grid; place-content: center; text-align: center; line-height: 1.1; background: var(--mi); color: #a9c2ff; }
+.ar .dt.pe { background: var(--pe); color: #ffb598; }
+.ar .dt b { font-size: 16px; font-weight: 600; }
+.ar .dt small { font-size: 10px; opacity: .85; }
+.ar .t { flex: 1; min-width: 0; }
+.ar .t b { display: block; font-size: 15px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ar .t small { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-top: 2px; font-size: 12.5px; color: var(--mu); }
+.ar .pl { font-style: normal; font-weight: 600; font-size: 14px; color: #63d9a6; white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* ── INCOME / EXPENSE COLORS ─────────────────────────────────── */
+:root { --inc: #63d9a6; --exp: #ff8a8a; }
+.inc, .kp b.inc, .mk b.inc, .cd b.inc { color: var(--inc); }
+.exp, .kp b.exp, .mk b.exp, .cd b.exp, .li b.exp { color: var(--exp); }
+.kp .inc-c { border-color: rgba(99,217,166,.30); background: linear-gradient(160deg, rgba(99,217,166,.12), rgba(99,217,166,.03)); }
+.kp .exp-c { border-color: rgba(255,138,138,.30); background: linear-gradient(160deg, rgba(255,138,138,.12), rgba(255,138,138,.03)); }
+.mo-h .t small .inc { color: var(--inc); }
+.mo-h .t small .exp { color: var(--exp); }

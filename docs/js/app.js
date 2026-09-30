@@ -364,6 +364,21 @@ const catBars = cat => {
     <div class="bar"><i style="width:${cat[c] / mx * 100}%;background:var(${c == 'Подологія' ? '--mi2' : '--pe2'})"></i></div>`).join('');
 };
 
+// Список прийомів: кого приймали і яку послугу робили (новіші зверху)
+const apRows = ds => ds.length
+  ? ds.slice().sort((a, b) => b.date.localeCompare(a.date) || tm(b.start) - tm(a.start)).map(a => {
+      const names = a.svc.map(i => (sv(i) || {}).title).filter(Boolean).join(', ') || 'Без послуги';
+      const s0 = sv(a.svc[0]);
+      const wd = DN[(new Date(a.date + 'T00:00').getDay() + 6) % 7];
+      return `
+      <div class="ar" data-a="edit" data-v="${a.id}">
+        <span class="dt ${s0 ? cls(s0.cat) : 'pe'}"><b>${+a.date.slice(8)}</b><small>${wd}</small></span>
+        <span class="t"><b>${esc(cn(a.cid))}</b><small>${esc(names)} · ${a.start}</small></span>
+        <em class="pl">+${money(a.price)}</em>
+      </div>`;
+    }).join('')
+  : '<p class="mut" style="margin:0">Прийомів немає.</p>';
+
 const workList = ws => ws.length
   ? `<div class="wk">${ws.map(w => `
       <div class="wr">
@@ -392,25 +407,27 @@ function st() {
       <div class="mo-h" role="button" tabindex="0" data-a="mt" data-v="${k}">
         <span class="t">
           <b>${MN[mo]} ${y}${k == cur ? '<em class="tag">Поточний</em>' : ''}</b>
-          <small>Дохід ${money(m.inc)} · Витрати ${money(m.out)}</small>
+          <small><span class="inc">Дохід ${money(m.inc)}</span> · <span class="exp">Витрати ${money(m.out)}</span></small>
         </span>
         <span class="amt ${m.net < 0 ? 'neg' : ''}">${money(m.net)}</span>
         ${ic('down')}
       </div>
       <div class="mo-b"><div><div class="in">
         <div class="mk">
-          <div><small>Дохід</small><b>${money(m.inc)}</b></div>
-          <div><small>Витрати</small><b>${money(m.out)}</b></div>
+          <div><small>Дохід</small><b class="inc">${money(m.inc)}</b></div>
+          <div><small>Витрати</small><b class="exp">${money(m.out)}</b></div>
           <div><small>Клієнтів</small><b>${m.cl}</b></div>
           <div><small>Записів</small><b>${m.done.length}</b></div>
         </div>
-        <div class="sec">Виконані роботи</div>
+        <div class="sec">Прийоми · ${m.done.length}</div>
+        ${apRows(m.done)}
+        <div class="sec" style="margin-top:14px">Виконані роботи</div>
         ${workList(m.works)}
         <div class="sec" style="margin-top:14px">Витрати</div>
         ${m.ex.map(e => `
           <div class="li" data-a="es" data-v="${e.id}">
             <span>${esc(e.cat)}<br><small class="mut">${fdt(e.date)} ${esc(e.desc)}</small></span>
-            <b>${money(e.amount)}</b>
+            <b class="exp">−${money(e.amount)}</b>
           </div>`).join('') || '<p class="mut" style="margin:6px 0 0">Витрат немає.</p>'}
       </div></div></div>
     </div>`;
@@ -424,8 +441,8 @@ function st() {
       <b class="big ${all.net < 0 ? 'neg' : ''}">${money(all.net)}</b>
     </div>
     <div class="kp">
-      <div class="cd"><small class="mut">Дохід</small><b>${money(all.inc)}</b></div>
-      <div class="cd"><small class="mut">Витрати</small><b>${money(all.out)}</b></div>
+      <div class="cd inc-c"><small class="mut">Дохід</small><b class="inc">${money(all.inc)}</b></div>
+      <div class="cd exp-c"><small class="mut">Витрати</small><b class="exp">${money(all.out)}</b></div>
       <div class="cd"><small class="mut">Клієнтів</small><b>${all.cl}</b></div>
       <div class="cd"><small class="mut">Завершених записів</small><b>${all.done.length}</b></div>
     </div>
