@@ -977,14 +977,16 @@ html, body, button, input, select, textarea, label, h1, h2, h3, b, small, span, 
 }
 
 
-/* ── Меню повністю в межах видимої області (iOS обрізає все нижче innerHeight) ── */
+/* ── Меню біля самого низу: розкладка від повної висоти екрана (--app-h) ── */
 :root { --strip: 0px; }
 @media (display-mode: standalone), (display-mode: fullscreen), (display-mode: minimal-ui) {
+  html, body { height: var(--app-h); }
   .nav {
-    top: auto; margin-bottom: 0;
-    bottom: max(10px, calc(env(safe-area-inset-bottom, 0px) - 10px - var(--strip, 0px)));
+    bottom: auto; margin-bottom: 0;
+    top: calc(var(--app-h) - var(--nav-h) - max(10px, calc(env(safe-area-inset-bottom, 0px) - 10px)));
   }
-  #v { padding-bottom: calc(var(--nav-h) + 34px + max(10px, calc(env(safe-area-inset-bottom, 0px) - 10px - var(--strip, 0px)))); }
+  #v { padding-bottom: calc(var(--nav-h) + 34px + max(10px, calc(env(safe-area-inset-bottom, 0px) - 10px))); }
+  #sh, #splash, #kr-ov { inset: auto; top: 0; left: 0; right: 0; height: var(--app-h); }
 }
 /* Фон плавно переходить у колір «полотна», щоб не було видно шва внизу */
 .bg {
@@ -1017,3 +1019,54 @@ html, body, button, input, select, textarea, label, h1, h2, h3, b, small, span, 
 .kp .exp-c { border-color: rgba(255,138,138,.30); background: linear-gradient(160deg, rgba(255,138,138,.12), rgba(255,138,138,.03)); }
 .mo-h .t small .inc { color: var(--inc); }
 .mo-h .t small .exp { color: var(--exp); }
+
+
+/* ── ФОРМА ЗАПИСУ ────────────────────────────────────────────── */
+.fh { display: flex; align-items: center; gap: 10px; margin: 26px 0 6px; font: 600 16px/1.2 Inter, system-ui, sans-serif; color: var(--tx); }
+.fh.first { margin-top: 14px; }
+.fh .i { width: 20px; height: 20px; color: var(--ac2); flex: none; }
+
+.fld { position: relative; }
+.fld input { padding-right: 48px; }
+.fld > .i { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: var(--mu); pointer-events: none; }
+.fld .sf { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); font-style: normal; color: var(--mu); pointer-events: none; }
+.fld input[type=date], .fld input[type=time] { display: block; min-height: 50px; text-align: left; }
+.fld input::-webkit-calendar-picker-indicator { opacity: 0; position: absolute; inset: 0; width: 100%; height: 100%; cursor: pointer; }
+.fld .ck { position: absolute; right: 16px; top: 50%; transform: translateY(-50%); color: var(--inc, #63d9a6); display: none; pointer-events: none; }
+.fld .ck .i { width: 20px; height: 20px; }
+.fld.ok .ck { display: block; }
+.fld.ok input { border-color: rgba(99,217,166,.45); }
+
+/* Підказки: клієнти / послуги */
+.sgl { margin-top: 8px; border: 1px solid var(--bo); border-radius: 16px; background: rgba(8,11,26,.85); max-height: 260px; overflow-y: auto; -webkit-overflow-scrolling: touch; }
+.sgl:empty { display: none; }
+.sgl.pk { display: none; }
+.sgl.pk.open { display: block; }
+.sg { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 13px 16px; border-bottom: 1px solid var(--line); cursor: pointer; }
+.sg:last-child { border-bottom: 0; }
+.sg:active { background: rgba(144,133,255,.12); }
+.sg b { font-weight: 600; font-size: 15px; }
+.sg small { color: var(--mu); font-size: 13px; white-space: nowrap; }
+.sg.add { color: var(--ac2); }
+.sg.add em { font-style: normal; font-weight: 700; margin-right: 4px; }
+.sg.add b { color: var(--tx); }
+.sgh { padding: 10px 16px 4px; font: 600 12px/1 Inter, sans-serif; color: var(--mu); }
+
+/* Рекомендовані години */
+.rh { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.rh::-webkit-scrollbar { display: none; }
+.rc { flex: none; padding: 11px 16px; border-radius: 14px; background: rgba(255,255,255,.06); border: 1px solid transparent; font: 600 14px/1 Inter, sans-serif; cursor: pointer; font-variant-numeric: tabular-nums; }
+.rc.on { border-color: #8a82ff; background: rgba(111,110,254,.2); color: #fff; }
+
+/* Картки вибраних послуг */
+.sv-c { display: flex; align-items: center; gap: 10px; padding: 12px 12px 12px 14px; margin-bottom: 8px; border: 1px solid var(--bo); border-radius: 16px; background: rgba(8,11,26,.5); border-left-width: 3px; }
+.sv-c.mi { border-left-color: var(--mi2); }
+.sv-c.pe { border-left-color: var(--pe2); }
+.sv-c .t { flex: 1; min-width: 0; }
+.sv-c .t b { display: block; font-size: 15px; font-weight: 600; }
+.sv-c .t small { color: var(--mu); font-size: 12px; }
+.qt { display: flex; align-items: center; gap: 6px; }
+.qt button { width: 32px; height: 32px; border: 0; border-radius: 10px; background: rgba(255,255,255,.08); color: var(--tx); font: 600 18px/1 Inter, sans-serif; cursor: pointer; display: grid; place-items: center; padding: 0; }
+.qt button:active { transform: scale(.9); }
+.qt span { min-width: 16px; text-align: center; font-weight: 600; font-variant-numeric: tabular-nums; }
+.sv-c .ib { width: 36px; height: 36px; flex: 0 0 36px !important; }

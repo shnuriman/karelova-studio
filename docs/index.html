@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=21">
+  <link rel="stylesheet" href="css/style.css?v=23">
 </head>
 <body>
 
@@ -92,19 +92,18 @@
   <input type="file" id="ff" accept="image/*" multiple hidden>
 
   <script>
-  // iOS PWA: реальна висота екрана для фіксованої розкладки (меню завжди внизу)
+  // iOS PWA: у iOS 26 innerHeight/100dvh коротші за екран (на висоту верхнього safe-area),
+  // тому беремо повну висоту екрана, щоб меню було біля самого низу
   (function(){
-    var st = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
-    if(!st) return;
+    var ios = window.navigator.standalone === true;
+    if(!ios) return;
     function set(){
       var p = matchMedia('(orientation: portrait)').matches;
       var full = p ? Math.max(screen.width, screen.height) : Math.min(screen.width, screen.height);
-      var ih = window.innerHeight;
+      var h = Math.max(window.innerHeight, full);
       var root = document.documentElement.style;
-      // сторінці належить лише innerHeight: усе, що нижче, iOS обрізає
-      root.setProperty('--app-h', ih + 'px');
-      // скільки px знизу екрана iOS не віддає сторінці (0 на нормальних пристроях)
-      root.setProperty('--strip', Math.max(0, full - ih) + 'px');
+      root.setProperty('--app-h', h + 'px');
+      root.setProperty('--strip', '0px');
     }
     set();
     addEventListener('resize', set);
@@ -113,6 +112,6 @@
   })();
   </script>
   <script src="config.js"></script>
-  <script src="js/cloud.js?v=22"></script>
+  <script src="js/cloud.js?v=24"></script>
 </body>
 </html>

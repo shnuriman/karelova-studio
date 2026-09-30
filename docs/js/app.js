@@ -71,11 +71,28 @@ let cur;
 const cn = id => (db.clients.find(c => c.id == id) || { name: '—' }).name;
 const sv = id => db.services.find(s => s.id == id);
 
+/* Назви послуг запису (повтори → «×2») */
+const svCount = svc => { const m = new Map(); svc.forEach(i => m.set(i, (m.get(i) || 0) + 1)); return m; };
+const svTitle = a => [...svCount(a.svc)].map(([i, n]) => { const x = sv(i); return x ? x.title + (n > 1 ? ' ×' + n : '') : ''; }).filter(Boolean).join(', ') || 'Без послуги';
+const dm = m => { const h = m / 60 | 0, r = m % 60; return (h ? h + ' год' : '') + (h && r ? ' ' : '') + (r || !h ? r + ' хв' : ''); };
+
 const sheet = h => {
   $('#sh').innerHTML =
     '<div class="bd" data-a="close"></div><div class="pn"><div class="hd"></div>' + h + '</div>';
   $('#sh').className = 'on';
+  S.snap = sig();
 };
+
+// Знімок введених даних у шторці: щоб попередити про незбережені зміни
+const sig = () => {
+  const f = [...document.querySelectorAll('#sh input, #sh select, #sh textarea')]
+    .filter(x => x.type != 'file').map(x => x.type == 'checkbox' ? x.checked : x.value);
+  return JSON.stringify([f, $('#xq') && cur ? [cur.cid, cur.svc] : 0]);
+};
+// шторка з кнопкою «Зберегти» — тоді є що втрачати
+const dirty = () => $('#sh').classList.contains('on')
+  && !!$('#sh [data-a=sa], #sh [data-a=sc], #sh [data-a=se], #sh [data-a=sv]')
+  && S.snap !== sig();
 
 /* ── ICONS ──────────────────────────────────────────────────── */
 const P = {
@@ -101,6 +118,10 @@ const P = {
   work:    '<rect x="3.5" y="7.5" width="17" height="12" rx="3"/><path d="M9 7.5V6a2 2 0 012-2h2a2 2 0 012 2v1.5M3.5 12.5h17"/>',
   x:       '<path d="M6 6l12 12M18 6L6 18"/>',
   checks:  '<path d="M3.5 12.5L8 17l6-10M13 15l1.5 1.5L21 8"/>',
+  clock:   '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
+  flag:    '<path d="M6 21V4M6 5h11l-2.5 4L17 13H6"/>',
+  cash:    '<rect x="3" y="6.5" width="18" height="11" rx="3"/><circle cx="12" cy="12" r="2.5"/>',
+  msg:     '<path d="M5 5h14a2 2 0 012 2v8a2 2 0 01-2 2h-7l-4 3.5V17H5a2 2 0 01-2-2V7a2 2 0 012-2z"/><path d="M8 10h8M8 13h5"/>',
 };
 const ic = n => `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
 
@@ -211,46 +232,135 @@ function apCard(a, s0) {
   return `<div class="ap ${s0 ? cls(s0.cat) : 'pe'} ${a.status == 'canc' ? 'canc' : ''}"
                data-a="edit" data-v="${a.id}">
     <b><span>${esc(cn(a.cid))}</span><span>${money(a.price)}</span></b>
-    <small>${a.start}–${ft(tm(a.start) + a.dur)} · ${esc(a.svc.map(i => (sv(i) || {}).title).filter(Boolean).join(', ') || 'Без послуги')} · ${ST[a.status]}</small>
+    <small>${a.start}–${ft(tm(a.start) + a.dur)} · ${esc(svTitle(a))} · ${ST[a.status]}</small>
   </div>`;
 }
 
 /* ── APPOINTMENT SHEET ──────────────────────────────────────── */
+const fld = (inner, icon) => `<div class="fld">${inner}${icon ? ic(icon) : ''}</div>`;
+
+function svHtml() {
+  return [...svCount(cur.svc)].map(([id, n]) => {
+    const x = sv(id);
+    if (!x) return '';
+    return `<div class="sv-c ${cls(x.cat)}">
+      <div class="t"><b>${esc(x.title)}</b><small>${money(x.price)} · ${dm(x.dur)}</small></div>
+      <div class="qt">
+        <button type="button" data-a="qty" data-v="${id}|-1" aria-label="Менше">−</button>
+        <span>${n}</span>
+        <button type="button" data-a="qty" data-v="${id}|1" aria-label="Більше">+</button>
+      </div>
+      <button type="button" class="ib dl" data-a="rsv" data-v="${id}" aria-label="Прибрати">${ic('trash')}</button>
+    </div>`;
+  }).join('');
+}
+
+const spHtml = () => {
+  if (!db.services.length) return '<div class="sg"><small>Додайте послуги в Налаштуваннях</small></div>';
+  return [...new Set(db.services.map(x => x.cat))].map(c =>
+    `<div class="sgh">${esc(c)}</div>` +
+    db.services.filter(x => x.cat == c).map(x =>
+      `<div class="sg" data-a="asv" data-v="${x.id}"><b>${esc(x.title)}</b><small>${money(x.price)} · ${dm(x.dur)}</small></div>`
+    ).join('')
+  ).join('');
+};
+
+const endOf = () => ft(Math.min(tm(cur.start) + cur.dur, 1439));
+const syncTimes = () => { $('#xs').value = cur.start; $('#xe').value = endOf(); };
+const thint = () => { $('#xth').textContent = V('xt') == 'done' ? '' : 'Не рахується в дохід'; };
+
+// Пошук клієнта: фільтр існуючих + «Додати як нового»
+function cql() {
+  const el = $('#xl');
+  if (!el) return;
+  const q = cur.cid ? '' : V('xq').trim();
+  const ql = q.toLowerCase(), qd = ql.replace(/\D/g, '');
+  const m = db.clients
+    .filter(c => !ql || c.name.toLowerCase().includes(ql) || (qd && (c.phone || '').replace(/\D/g, '').includes(qd)))
+    .sort((x, y) => x.name.localeCompare(y.name)).slice(0, 40);
+  const exact = db.clients.some(c => c.name.trim().toLowerCase() == ql);
+  el.innerHTML =
+    (q && !exact ? `<div class="sg add" data-a="acl"><span><em>+</em> Додати <b>${esc(q)}</b> як нового клієнта</span></div>` : '') +
+    m.map(c => `<div class="sg" data-a="pcl" data-v="${c.id}"><b>${esc(c.name)}</b><small>${esc(c.phone || '')}</small></div>`).join('') +
+    (!q && !m.length ? '<div class="sg"><small>Клієнтів ще немає — введіть ім’я</small></div>' : '');
+}
+
+// Вільні години для обраної дати та поточної тривалості
+function recH() {
+  const el = $('#xr');
+  if (!el) return;
+  const cfg = dcfg(cur.date);
+  if (!cfg.on) { el.innerHTML = '<span class="mut">Вихідний день</span>'; return; }
+  const step = db.sched.step, dur = cur.dur;
+  const busy = db.appts.filter(x => x.date == cur.date && x.status != 'canc' && x.id != cur.id)
+    .map(x => [tm(x.start), tm(x.start) + x.dur]);
+  const out = [];
+  for (let t = tm(cfg.s); t + dur <= tm(cfg.e); t += step)
+    if (!busy.some(([a, b]) => t < b && t + dur > a)) out.push(t);
+  el.innerHTML = out.map(t => `<span class="rc ${ft(t) == cur.start ? 'on' : ''}" data-a="rh" data-v="${ft(t)}">${ft(t)}</span>`).join('')
+    || '<span class="mut">Вільних годин немає</span>';
+}
+
+function svChanged() {
+  const ss = cur.svc.map(sv).filter(Boolean);
+  cur.price = ss.reduce((x, y) => x + y.price, 0);
+  cur.dur   = ss.reduce((x, y) => x + y.dur, 0) || db.sched.step;
+  $('#xp').value = cur.price;
+  $('#xsv').innerHTML = svHtml();
+  syncTimes();
+  recH();
+}
+
 function apSheet(id, t0) {
   const a = id
     ? db.appts.find(x => x.id == id)
     : { id: '', date: S.d, start: t0, dur: db.sched.step, price: 0, svc: [], status: 'plan', cid: '', comment: '', photos: [] };
   cur = JSON.parse(JSON.stringify(a));
+  cur.svc = cur.svc || [];
   sheet(`
-    ${shHead((id ? 'Запис' : 'Новий запис') + ' · ' + fdt(cur.date), id ? 'da' : '')}
-    <label>Клієнт</label>
-    <div class="row">
-      <select id="xc">
-        <option value="">Оберіть клієнта…</option>
-        ${db.clients.map(c => `<option value="${c.id}" ${c.id == cur.cid ? 'selected' : ''}>${esc(c.name)}</option>`).join('')}
-      </select>
-      <button class="bt sm" data-a="nc">${ic('plus')}</button>
+    ${shHead(id ? 'Запис' : 'Новий запис', id ? 'da' : '')}
+
+    <div class="fh first">${ic('users')} Клієнт</div>
+    <div class="fld ${cur.cid ? 'ok' : ''}" id="xcw">
+      <input id="xq" autocomplete="off" autocorrect="off" placeholder="Ім’я клієнта" value="${esc(cur.cid ? cn(cur.cid) : '')}">
+      <span class="ck">${ic('check')}</span>
     </div>
-    <label>Послуги</label>
-    <div class="chips">
-      ${db.services.map(s => `<span class="chip ${cls(s.cat)} ${cur.svc.includes(s.id) ? 'on' : ''}" data-a="ts" data-v="${s.id}">${esc(s.title)}</span>`).join('') || '<span class="mut">Додайте послуги в Налаштуваннях</span>'}
+    <div class="sgl" id="xl"></div>
+
+    <div class="fh">${ic('clock')} Дата та час запису</div>
+    <label>Дата</label>
+    ${fld(`<input id="xdt" type="date" value="${cur.date}">`, 'cal')}
+    <div class="row" style="gap:10px">
+      <div><label>Початок</label>${fld(`<input id="xs" type="time" value="${cur.start}">`, 'clock')}</div>
+      <div><label>Кінець</label>${fld(`<input id="xe" type="time" value="${endOf()}">`, 'clock')}</div>
     </div>
-    <div class="row" style="gap:8px">
-      <div><label>Початок</label><input id="xs" type="time" value="${cur.start}"></div>
-      <div><label>Тривалість, хв</label><input id="xd" type="number" min="5" step="5" value="${cur.dur}"></div>
-      <div><label>Ціна, ₴</label><input id="xp" type="number" min="0" value="${cur.price}"></div>
-    </div>
-    <label>Статус</label>
+    <label>Рекомендовані години</label>
+    <div class="rh" id="xr"></div>
+
+    <div class="fh">${ic('file')} Послуги</div>
+    <div id="xsv">${svHtml()}</div>
+    <button type="button" class="bt gh" data-a="tsp">${ic('plus')} Додати послугу</button>
+    <div class="sgl pk" id="xpk">${spHtml()}</div>
+
+    <div class="fh">${ic('cash')} Ціна</div>
+    <div class="fld"><input id="xp" type="number" inputmode="decimal" min="0" value="${cur.price}"><em class="sf">₴</em></div>
+
+    <div class="fh">${ic('flag')} Статус</div>
     <select id="xt">
       ${Object.keys(ST).map(k => `<option value="${k}" ${k == cur.status ? 'selected' : ''}>${ST[k]}</option>`).join('')}
     </select>
-    <label>Коментар</label>
-    <textarea id="xm">${esc(cur.comment)}</textarea>
+    <small class="mut" id="xth" style="display:block;margin-top:6px"></small>
+
+    <div class="fh">${ic('msg')} Коментар</div>
+    <textarea id="xm" placeholder="Напишіть коментар тут">${esc(cur.comment)}</textarea>
+
     <div class="row" style="margin-top:18px">
       ${closeBtn()}
       <button class="bt" data-a="sa">${ic('check')} Зберегти</button>
     </div>
   `);
+  thint();
+  recH();
 }
 
 const phs = () => {
@@ -318,7 +428,7 @@ function cs(id) {
         <b>Витрачено: ${money(spent)}</b><br>
         <small class="mut">Історія візитів (${h.length})</small>
         ${h.map(a => `<div class="li" data-a="edit" data-v="${a.id}">
-          <span>${fdt(a.date)} · ${esc(a.svc.map(i => (sv(i) || {}).title).filter(Boolean).join(', ') || '—')}</span>
+          <span>${fdt(a.date)} · ${esc(svTitle(a))}</span>
           <small>${money(a.price)}</small>
         </div>`).join('')}
       </div>` : ''}
@@ -367,7 +477,7 @@ const catBars = cat => {
 // Список прийомів: кого приймали і яку послугу робили (новіші зверху)
 const apRows = ds => ds.length
   ? ds.slice().sort((a, b) => b.date.localeCompare(a.date) || tm(b.start) - tm(a.start)).map(a => {
-      const names = a.svc.map(i => (sv(i) || {}).title).filter(Boolean).join(', ') || 'Без послуги';
+      const names = svTitle(a);
       const s0 = sv(a.svc[0]);
       const wd = DN[(new Date(a.date + 'T00:00').getDay() + 6) % 7];
       return `
@@ -548,12 +658,28 @@ const V    = i => $('#' + i).value;
 const done = () => { $('#sh').className = ''; render(); };
 
 function rd() {
-  cur.cid     = V('xc');
-  cur.start   = V('xs');
-  cur.dur     = +V('xd') || db.sched.step;
+  if (V('xdt')) cur.date = V('xdt');
+  if (V('xs'))  cur.start = V('xs');
+  const e = V('xe');
+  if (e && tm(e) > tm(cur.start)) cur.dur = tm(e) - tm(cur.start);
+  cur.dur     = Math.max(5, cur.dur || db.sched.step);
   cur.price   = +V('xp') || 0;
   cur.status  = V('xt');
   cur.comment = V('xm');
+}
+
+// зміна дати/часу у формі запису
+function apChange(k) {
+  if (k == 'xt') { thint(); return; }
+  if (k == 'xdt') { if (V('xdt')) cur.date = V('xdt'); else $('#xdt').value = cur.date; }
+  if (k == 'xs')  { if (V('xs')) cur.start = V('xs'); syncTimes(); }
+  if (k == 'xe') {
+    const e = V('xe');
+    if (e && tm(e) > tm(cur.start)) cur.dur = tm(e) - tm(cur.start);
+    else toast('Кінець має бути пізніше за початок', 'warn');
+    syncTimes();
+  }
+  recH();
 }
 
 const A = {
@@ -593,7 +719,10 @@ const A = {
 
   im: () => document.getElementById('fi').click(),
 
-  close: () => { $('#sh').className = ''; },
+  close: () => {
+    if (dirty() && !confirm('Закрити без збереження?\nВнесені дані буде втрачено.')) return;
+    $('#sh').className = '';
+  },
 
   tab: v => { S.tab = v; render(); },
   dw:  () => setDay(1),
@@ -616,32 +745,54 @@ const A = {
   new:  v => apSheet('', v),
   edit: v => apSheet(v),
 
-  nc: () => {
-    const n = prompt('\u0406\u043c\u2019\u044f \u043a\u043b\u0456\u0454\u043d\u0442\u0430');
+  // клієнт: вибір зі списку / створення нового прямо з пошуку
+  pcl: v => {
+    cur.cid = v;
+    $('#xq').value = cn(v);
+    $('#xcw').classList.add('ok');
+    $('#xl').innerHTML = '';
+    $('#xq').blur();
+  },
+  acl: () => {
+    const n = V('xq').trim().replace(/\s+/g, ' ');
     if (!n) return;
     const c = { id: uid(), name: n, phone: '', ig: '', note: '' };
     db.clients.push(c);
     save();
-    $('#xc').add(new Option(n, c.id, true, true));
+    toast('Клієнта додано');
+    A.pcl(c.id);
   },
 
-  ts: (v, t) => {
-    t.classList.toggle('on');
-    cur.svc = cur.svc.includes(v) ? cur.svc.filter(x => x != v) : [...cur.svc, v];
-    const ss = cur.svc.map(sv).filter(Boolean);
-    $('#xp').value = ss.reduce((x, s) => x + s.price, 0);
-    $('#xd').value = ss.reduce((x, s) => x + s.dur, 0) || db.sched.step;
+  // послуги: додати / кількість / прибрати
+  tsp: () => $('#xpk').classList.toggle('open'),
+  asv: v => { cur.svc.push(v); $('#xpk').classList.remove('open'); svChanged(); },
+  qty: v => {
+    const [id, d] = v.split('|');
+    if (d == '1') cur.svc.push(id);
+    else if (cur.svc.filter(x => x == id).length > 1) cur.svc.splice(cur.svc.indexOf(id), 1);
+    svChanged();
   },
+  rsv: v => { cur.svc = cur.svc.filter(x => x != v); svChanged(); },
+
+  // рекомендована година
+  rh: v => { cur.start = v; syncTimes(); recH(); },
 
   dp: v => { cur.photos.splice(+v, 1); phs(); },
 
   sa: () => {
     rd();
-    if (!cur.cid) { toast('\u041e\u0431\u0435\u0440\u0456\u0442\u044c \u0430\u0431\u043e \u0434\u043e\u0434\u0430\u0439\u0442\u0435 \u043a\u043b\u0456\u0454\u043d\u0442\u0430', 'warn'); return; }
+    if (!cur.cid) {
+      const q = V('xq').trim().toLowerCase();
+      const m = q && db.clients.find(c => c.name.trim().toLowerCase() == q);
+      if (m) cur.cid = m.id;
+    }
+    if (!cur.cid) { toast('Оберіть або додайте клієнта', 'warn'); return; }
     if (cur.id) db.appts = db.appts.map(a => a.id == cur.id ? cur : a);
     else { cur.id = uid(); db.appts.push(cur); }
     save();
-    toast('\u0417\u0430\u043f\u0438\u0441 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e');
+    S.d = cur.date;
+    S.m = new Date(+cur.date.slice(0, 4), +cur.date.slice(5, 7) - 1, 1);
+    toast('Запис збережено');
     done();
   },
 
@@ -723,13 +874,19 @@ document.addEventListener('click', e => {
   if (t && A[t.dataset.a]) A[t.dataset.a](t.dataset.v, t);
 });
 
+document.addEventListener('focusin', e => {
+  if (e.target.id == 'xq') { if (cur.cid) e.target.select(); cql(); }
+});
+
 document.addEventListener('input', e => {
+  if (e.target.id == 'xq') { cur.cid = ''; $('#xcw').classList.remove('ok'); cql(); return; }
   if (e.target.id == 'iq') { $('#il').innerHTML = impRows(e.target.value.toLowerCase()); return; }
   if (e.target.dataset.c == 'q') { S.q = e.target.value; $('#cl').innerHTML = cl(); }
 });
 
 document.addEventListener('change', async e => {
   const t = e.target, c = t.dataset.c;
+  if (['xdt', 'xs', 'xe', 'xt'].includes(t.id)) { apChange(t.id); return; }
   if (t.id == 'fv') {
     const f = t.files[0];
     if (!f) return;
