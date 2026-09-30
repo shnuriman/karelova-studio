@@ -1220,22 +1220,45 @@ input, select, textarea { font-size: 16px !important; }
 .pk-f { padding: 8px 16px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
 .pk-f .bt:disabled { opacity: .45; }
 
-/* Компактний попап вибору послуг: один рядок на послугу */
-.pk-pn { max-height: 76%; border-radius: 22px; }
-.pk-h { padding: 12px 12px 4px 18px; }
-.pk-h h3 { font-size: 16px; }
-.pk-h .ib { width: 34px; height: 34px; }
-.pk-h .ib .i { width: 16px; height: 16px; }
-.pk-l { padding: 0 6px 4px; }
-.pk-l .sgh { padding: 8px 12px 3px; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
-.pk-r { gap: 10px; padding: 7px 10px; border-radius: 10px; }
-.pk-r .t { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-.pk-r .t b { display: inline; font-size: 14px; line-height: 1.25; }
-.pk-r .t small { flex: none; font-size: 12px; white-space: nowrap; }
-.pk-c { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 6px; }
-.pk-c .i { width: 13px; height: 13px; }
-.pk-f { padding: 6px 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
-.pk-f .bt { min-height: 44px; font-size: 15px; }
+/* Попап вибору послуг: назва + тривалість зліва, ціна і галочка справа */
+.pk-pn { max-height: 80%; border-radius: 24px; }
+.pk-h { padding: 16px 16px 10px 20px; }
+.pk-h h3 { font-size: 18px; font-weight: 650; letter-spacing: -.01em; }
+/* ідеальне коло: фіксуємо і ширину, і висоту, і flex-basis */
+.pk-x {
+  flex: 0 0 36px; width: 36px; height: 36px; min-width: 36px; aspect-ratio: 1 / 1;
+  padding: 0; margin: 0; border-radius: 50%; border: 1px solid rgba(120,130,220,.28);
+  background: rgba(28,32,66,.55); color: var(--ac2, #9085ff); cursor: pointer;
+  display: grid; place-items: center; transition: transform .2s, background .2s;
+}
+.pk-x .i { width: 16px; height: 16px; }
+.pk-x:active { transform: scale(.9); }
+.pk-tabs { display: flex; gap: 8px; padding: 0 16px 10px; overflow-x: auto; scrollbar-width: none; }
+.pk-tabs::-webkit-scrollbar { display: none; }
+.pk-tab {
+  flex: none; padding: 8px 16px; border-radius: 999px; font: 500 13.5px/1 Inter, sans-serif;
+  color: var(--mu); background: transparent; border: 1px solid var(--bo); cursor: pointer;
+  transition: background .15s, color .15s, border-color .15s;
+}
+.pk-tab.on { color: #fff; background: var(--grad); border-color: transparent; }
+.pk-l { padding: 0 12px 8px; }
+.pk-g[hidden] { display: none; }
+.pk-l .sgh { padding: 10px 6px 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mu); }
+.pk-r {
+  display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 8px;
+  border-radius: 16px; border: 1px solid var(--bo); background: rgba(255,255,255,.025);
+  transition: background .15s, border-color .15s;
+}
+.pk-r .t { flex: 1; min-width: 0; display: block; }
+.pk-r .t b { display: block; font-size: 15px; font-weight: 550; line-height: 1.25; }
+.pk-r .t small { display: inline-flex; align-items: center; gap: 4px; margin-top: 3px; font-size: 12.5px; color: var(--mu); white-space: nowrap; }
+.pk-r .t small .i { width: 12px; height: 12px; }
+.pk-p { flex: none; font-size: 15px; font-weight: 600; white-space: nowrap; }
+.pk-c { flex: 0 0 24px; width: 24px; height: 24px; border-radius: 50%; }
+.pk-c .i { width: 14px; height: 14px; }
+.pk-r.on { background: rgba(144,133,255,.12); border-color: rgba(144,133,255,.55); }
+.pk-f { padding: 10px 16px calc(12px + env(safe-area-inset-bottom, 0px)); }
+.pk-f .bt { min-height: 48px; font-size: 15px; }
 
 /* ── Налаштування: список розділів ──────────────────────────── */
 .stl { background: var(--cd); border: 1px solid var(--bo); border-radius: 24px; margin-bottom: 14px; overflow: hidden; }
@@ -1893,3 +1916,10 @@ body, #v, .cd, .ap, .stl, .sti, .nav, .pn, input, select, textarea, .ib, .bt.gh,
 .hv-p { grid-column: 2; grid-row: 1 / span 2; align-self: center; font: 600 14px/1 Inter, system-ui, sans-serif; white-space: nowrap; font-variant-numeric: tabular-nums; }
 .hv.st-canc .hv-s, .hv.st-canc .hv-p { text-decoration: line-through; opacity: .5; }
 .hv.st-canc .hv-d i { background: rgba(255,138,138,.14); color: var(--exp, #ff8a8a); }
+
+/* світла тема: попап послуг */
+[data-theme="light"] .pk-x { background: rgba(93,92,250,.08); border-color: rgba(93,92,250,.25); }
+[data-theme="light"] .pk-r { background: #fff; border-color: rgba(90,110,165,.18); }
+[data-theme="light"] .pk-r.on { background: rgba(93,92,250,.08); border-color: rgba(93,92,250,.5); }
+[data-theme="light"] .pk-tab { border-color: rgba(90,110,165,.25); }
+[data-theme="light"] .pk-tab.on { border-color: transparent; }

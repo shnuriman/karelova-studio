@@ -595,19 +595,27 @@ const pkOpen = () => {
   pkSel = new Set();
   let m = $('#pkm');
   if (!m) { m = document.createElement('div'); m.id = 'pkm'; document.body.appendChild(m); }
+  const cats = [...new Set(db.services.map(x => x.cat))];
+  const chips = cats.length > 1
+    ? `<div class="pk-tabs"><button type="button" class="pk-tab on" data-a="pkc" data-v="">Усі</button>` +
+      cats.map(c => `<button type="button" class="pk-tab" data-a="pkc" data-v="${esc(c)}">${esc(c)}</button>`).join('') + '</div>'
+    : '';
   const list = !db.services.length
     ? '<div class="sg"><small>Додайте послуги в Налаштуваннях</small></div>'
-    : [...new Set(db.services.map(x => x.cat))].map(c =>
-        `<div class="sgh">${esc(c)}</div>` +
+    : cats.map(c =>
+        `<div class="pk-g" data-cat="${esc(c)}"><div class="sgh">${esc(c)}</div>` +
         db.services.filter(x => x.cat == c).map(x =>
-          `<div class="pk-r ${cls(x.cat)}" data-a="tgs" data-v="${x.id}"><i class="pk-c">${ic('check')}</i>
-             <span class="t"><b>${esc(x.title)}</b><small>${money(x.price)} · ${dm(x.dur)}</small></span></div>`
-        ).join('')
+          `<div class="pk-r ${cls(x.cat)}" data-a="tgs" data-v="${x.id}">
+             <span class="t"><b>${esc(x.title)}</b><small>${ic('clock')} ${dm(x.dur)}</small></span>
+             <span class="pk-p">${money(x.price)}</span>
+             <i class="pk-c">${ic('check')}</i></div>`
+        ).join('') + '</div>'
       ).join('');
   m.innerHTML = `<div class="pk-bd" data-a="pkx"></div>
     <div class="pk-pn">
       <div class="pk-h"><h3>Оберіть послуги</h3>
-        <button type="button" class="ib" data-a="pkx" aria-label="Закрити">${ic('x')}</button></div>
+        <button type="button" class="pk-x" data-a="pkx" aria-label="Закрити">${ic('x')}</button></div>
+      ${chips}
       <div class="pk-l">${list}</div>
       <div class="pk-f"><button type="button" class="bt" id="pka" data-a="apk"></button></div>
     </div>`;
@@ -1386,6 +1394,10 @@ const A = {
   // послуги: додати / кількість / прибрати
   tsp: () => pkOpen(),
   pkx: () => pkClose(),
+  pkc: (v, t) => {
+    document.querySelectorAll('#pkm .pk-tab').forEach(b => b.classList.toggle('on', b === t));
+    document.querySelectorAll('#pkm .pk-g').forEach(g => { g.hidden = !!v && g.dataset.cat !== v; });
+  },
   tgs: (v, t) => {
     if (pkSel.has(v)) pkSel.delete(v); else pkSel.add(v);
     t.classList.toggle('on', pkSel.has(v));
