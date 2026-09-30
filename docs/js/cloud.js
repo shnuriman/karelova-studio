@@ -200,7 +200,6 @@ async function push(){
     }
     localStorage.setItem(VK,String(ver));
     busy=false;setDirty(false);
-    if(typeof window.toast=='function')window.toast('\u0417\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e');
   }catch(e){
     busy=false;
     if(e.auth){setDirty(true);localStorage.removeItem(SK);alert('\u0421\u0435\u0441\u0456\u044f \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043b\u0430\u0441\u044c. \u0423\u0432\u0456\u0439\u0434\u0456\u0442\u044c \u0437\u043d\u043e\u0432\u0443: \u043d\u0435\u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u0437\u043c\u0456\u043d\u0438 \u0437\u0431\u0435\u0440\u0435\u0436\u0443\u0442\u044c\u0441\u044f \u043f\u0456\u0441\u043b\u044f \u0432\u0445\u043e\u0434\u0443.');location.reload();return}

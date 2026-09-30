@@ -13,7 +13,7 @@ window.toast = function(msg, type) {
     t.style.opacity = '0';
     t.style.transform = 'translateY(-6px)';
     setTimeout(function() { t.remove(); }, 260);
-  }, 3000);
+  }, type == 'ok' ? 1600 : 2600);
 };
 
 /* ── CORE UTILS ─────────────────────────────────────────────── */
@@ -210,16 +210,23 @@ function sch() {
             <button class="bt" data-a="dw">${ic('work')} Зробити робочим</button>
           </div>` + list.filter(a => a.status != 'canc').map(a => apCard(a, sv(a.svc[0]))).join('');
   } else {
+    const act = list.filter(a => a.status != 'canc');
+    const shown = new Set();
     for (let t = tm(cfg.s); t < tm(cfg.e); t += step) {
-      const ap = list.filter(a => a.status != 'canc').find(a => tm(a.start) < t + step && tm(a.start) + a.dur > t);
-      if (!ap) {
+      const busy = act.some(a => tm(a.start) < t + step && tm(a.start) + a.dur > t);
+      if (!busy) {
         sl += `<div class="slot" data-a="new" data-v="${ft(t)}">
                  <span>${ft(t)}</span><em>вільно</em></div>`;
-      } else if (tm(ap.start) >= t) {
-        const s0 = sv(ap.svc[0]);
-        sl += apCard(ap, s0);
+      } else {
+        // усі записи, що починаються в цьому слоті (у т.ч. накладені один на одного)
+        act.filter(a => tm(a.start) >= t && tm(a.start) < t + step).forEach(a => {
+          shown.add(a.id);
+          sl += apCard(a, sv(a.svc[0]));
+        });
       }
     }
+    // записи поза робочими годинами / поза сіткою теж показуємо
+    act.filter(a => !shown.has(a.id)).forEach(a => { sl += apCard(a, sv(a.svc[0])); });
   }
   sl += list.filter(a => a.status == 'canc').map(a => apCard(a, sv(a.svc[0]))).join('');
   const dayLabel = dt.getDate() + ' ' + MN[dt.getMonth()].toLowerCase().replace(/ь$/, 'я').replace(/й$/, 'я') + ', ' + DN[(dt.getDay() + 6) % 7];
@@ -805,6 +812,15 @@ const A = {
       if (m) cur.cid = m.id;
     }
     if (!cur.cid) { toast('Оберіть або додайте клієнта', 'warn'); return; }
+    if (cur.status != 'canc') {
+      const a1 = tm(cur.start), b1 = a1 + cur.dur;
+      const clash = db.appts.filter(x => x.id != cur.id && x.date == cur.date && x.status != 'canc'
+        && tm(x.start) < b1 && tm(x.start) + x.dur > a1);
+      if (clash.length) {
+        const list = clash.map(x => '• ' + x.start + ' – ' + ft(tm(x.start) + x.dur) + ' · ' + cn(x.cid)).join('\n');
+        if (!confirm('На цей час уже є запис:\n' + list + '\n\nЗберегти все одно? Обидва записи залишаться.')) return;
+      }
+    }
     if (cur.id) db.appts = db.appts.map(a => a.id == cur.id ? cur : a);
     else { cur.id = uid(); db.appts.push(cur); }
     save();
