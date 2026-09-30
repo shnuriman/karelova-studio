@@ -1,6 +1,6 @@
 // Karelova Studio :: service worker
 // Кешує лише оболонку застосунку. Дані (/api/*) НІКОЛИ не кешуються: це живі записи.
-const CACHE = 'karelova-shell-v41';
+const CACHE = 'karelova-shell-v45';
 const SHELL = ['./', './index.html', './manifest.json', './css/style.css', './js/app.js', './js/cloud.js', './config.js', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', e => { e.waitUntil(caches.open(CACHE).then(c => c.addAll(SHELL)).catch(() => {})); self.skipWaiting(); });
 self.addEventListener('activate', e => { e.waitUntil(caches.keys().then(k => Promise.all(k.filter(x => x !== CACHE).map(x => caches.delete(x)))).then(() => self.clients.claim())); });

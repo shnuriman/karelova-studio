@@ -561,7 +561,7 @@ const workList = ws => {
     const col = c == 'Подологія' ? '--mi2' : c == 'Шугаринг' ? '--pe2' : '--mu';
     return `<div class="wg">
       <div class="wgh"><i style="background:var(${col})"></i><span>${esc(c || 'Інше')}</span><b>${money(l.reduce((s, w) => s + w.amt, 0))}</b></div>
-      ${l.map(w => `<div class="wr"><span>${esc(w.title)}</span><em>×${w.n}</em><b>${money(w.amt)}</b></div>`).join('')}
+      ${l.map(w => `<div class="wr"><span>${esc(w.title)}<em>×${w.n}</em></span><b>${money(w.amt)}</b></div>`).join('')}
     </div>`;
   }).join('')}</div>`;
 };
@@ -685,7 +685,7 @@ const stRow = (ico, tone, title, sub, badge, act, noChv) => `
   <div class="sti" role="button" tabindex="0" data-a="${act}">
     <span class="ico ${tone}">${ic(ico)}</span>
     <span class="t"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</span>
-    ${badge == 'ok' ? `<i class="bdg ok">${ic('check')}</i>` : badge == 'warn' ? '<i class="bdg warn">!</i>' : ''}
+    ${badge == 'warn' ? '<i class="bdg warn">!</i>' : ''}
     ${noChv ? '' : `<span class="chv">${ic('next')}</span>`}
   </div>`;
 

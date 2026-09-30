@@ -1296,3 +1296,15 @@ input:-webkit-autofill, input:-webkit-autofill:focus, textarea:-webkit-autofill 
 .er .t b { display: block; font-size: 15px; font-weight: 600; }
 .er .t small { display: block; margin-top: 3px; font-size: 13px; color: var(--mu); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .er .mn { font-style: normal; font-weight: 600; font-size: 14.5px; color: var(--exp); white-space: nowrap; font-variant-numeric: tabular-nums; }
+
+/* Пошук на сторінках: відступ під іконку (перебиває загальний padding полів .pn) */
+.pn .sr input:not([type=checkbox]) { padding-left: 46px; }
+.pn .sr .i { left: 16px; }
+
+/* Виконані роботи: компактно */
+.wk { gap: 6px; margin-top: 2px; }
+.wgh { padding-bottom: 1px; font-size: 13.5px; }
+.wr { padding: 4px 0 4px 16px; gap: 8px; border-top: 0; font-size: 13.5px; line-height: 1.25; }
+.wr span em { display: inline; flex: none; margin-left: 6px; font-size: 12px; text-align: left; }
+.wr b { min-width: 0; font-size: 13.5px; }
+.sh2 { margin-top: 14px; padding-top: 12px; }

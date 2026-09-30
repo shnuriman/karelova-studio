@@ -4,7 +4,7 @@ const C=window.KR_CONFIG||{},K='karelova_v1',SK='karelova_sess',VK='karelova_ver
 const configured=C.url&&C.anonKey&&!/YOUR-/.test(C.url+C.anonKey);
 const T=C.url+'/rest/v1/crm_data';
 const H=t=>({apikey:C.anonKey,Authorization:'Bearer '+(t||C.anonKey),'Content-Type':'application/json'});
-let sess=null,ver=0,db=null,timer=null,busy=false,again=false;
+let sess=null,ver=0,db=null,timer=null,busy=false,again=false,fail=false,retryT=null;
 try{sess=JSON.parse(localStorage.getItem(SK))}catch(e){}
 const now=()=>Math.floor(Date.now()/1000);
 const authErr=()=>Object.assign(new Error('auth'),{auth:true});
@@ -159,7 +159,7 @@ async function loadRemote(){
 }
 const cache=()=>{try{return JSON.parse(localStorage.getItem(K))}catch(e){return null}};
 const dirty=()=>localStorage.getItem(DK)=='1';
-function setDirty(v){if(v)localStorage.setItem(DK,'1');else localStorage.removeItem(DK);badge.style.display=v&&!busy?'block':'none'}
+function setDirty(v){if(v)localStorage.setItem(DK,'1');else localStorage.removeItem(DK);badge.style.display=v&&fail?'block':'none'}
 
 function conflict(){
   alert('\u0414\u0430\u043d\u0456 \u043d\u0430 \u0441\u0435\u0440\u0432\u0435\u0440\u0456 \u0437\u043c\u0456\u043d\u0435\u043d\u0456 \u0437 \u0456\u043d\u0448\u043e\u0433\u043e \u043f\u0440\u0438\u0441\u0442\u0440\u043e\u044e. \u0421\u0442\u043e\u0440\u0456\u043d\u043a\u0443 \u0431\u0443\u0434\u0435 \u043e\u043d\u043e\u0432\u043b\u0435\u043d\u043e, \u0449\u043e\u0431 \u043d\u0435 \u0432\u0442\u0440\u0430\u0442\u0438\u0442\u0438 \u0442\u0456 \u0437\u043c\u0456\u043d\u0438. \u0412\u0430\u0448\u0456 \u043e\u0441\u0442\u0430\u043d\u043d\u0456 \u043f\u0440\u0430\u0432\u043a\u0438 \u043d\u0430 \u0446\u044c\u043e\u043c\u0443 \u043f\u0440\u0438\u0441\u0442\u0440\u043e\u0457 \u043c\u043e\u0436\u0443\u0442\u044c \u043d\u0435 \u0437\u0431\u0435\u0440\u0435\u0433\u0442\u0438\u0441\u044f.');
@@ -177,7 +177,7 @@ async function push(){
         const rv=await fetch(T+'?select=version',{headers:H(t)});
         if(rv.status==401)throw authErr();
         const ra=rv.ok?await rv.json():[];
-        if(!ra.length){busy=false;setDirty(true);return}
+        if(!ra.length){busy=false;fail=true;setDirty(true);return}
         ver=ra[0].version;
         r=await fetch(T+'?version=eq.'+ver,{method:'PATCH',headers:h,body:JSON.stringify({data:db,version:ver+1})});
         if(r.status==401)throw authErr();
@@ -199,11 +199,12 @@ async function push(){
       ver=j[0].version;
     }
     localStorage.setItem(VK,String(ver));
-    busy=false;setDirty(false);
+    busy=false;fail=false;clearTimeout(retryT);setDirty(false);
   }catch(e){
     busy=false;
     if(e.auth){setDirty(true);localStorage.removeItem(SK);alert('\u0421\u0435\u0441\u0456\u044f \u0437\u0430\u0432\u0435\u0440\u0448\u0438\u043b\u0430\u0441\u044c. \u0423\u0432\u0456\u0439\u0434\u0456\u0442\u044c \u0437\u043d\u043e\u0432\u0443: \u043d\u0435\u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u0456 \u0437\u043c\u0456\u043d\u0438 \u0437\u0431\u0435\u0440\u0435\u0436\u0443\u0442\u044c\u0441\u044f \u043f\u0456\u0441\u043b\u044f \u0432\u0445\u043e\u0434\u0443.');location.reload();return}
-    setDirty(true);
+    fail=true;setDirty(true);
+    clearTimeout(retryT);retryT=setTimeout(()=>{if(dirty())push()},4000);
   }
   if(again){again=false;push()}
 }
@@ -246,7 +247,7 @@ window.addEventListener('online',()=>{if(dirty())push()});
     }
   }
   window.__DB=db;window.__SAVE=save;window.__LOGOUT=logout;
-  const s=document.createElement('script');s.src='js/app.js?v=27';document.body.appendChild(s);
+  const s=document.createElement('script');s.src='js/app.js?v=45';document.body.appendChild(s);
   if(dirty())push();
 })();
 })();
