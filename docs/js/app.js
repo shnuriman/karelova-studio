@@ -341,6 +341,7 @@ const S = {
   mx:  {},
 };
 let cur;
+let lastDayTap = { id: '', t: 0 };
 
 const cn = id => (db.clients.find(c => c.id == id) || { name: '—' }).name;
 const sv = id => db.services.find(s => s.id == id);
@@ -1330,7 +1331,18 @@ const A = {
   dw:  () => setDay(1),
   dof: () => setDay(0),
   mt:  (v, t) => { const el = t.closest('.mo'); el.classList.toggle('open'); S.mx[v] = el.classList.contains('open'); },
-  day: v => { S.d = v; render(true); },
+  day: v => {
+    const now = Date.now();
+    if (lastDayTap.id === v && (now - lastDayTap.t) < 450) {
+      lastDayTap = { id: '', t: 0 };
+      S.d = v;
+      setDay(!dcfg(v).on);
+      return;
+    }
+    lastDayTap = { id: v, t: now };
+    S.d = v;
+    render(true);
+  },
   // перехід між місяцями: нижня панель дня переходить разом з календарем
   pm:  v => {
     S.m = new Date(S.m.getFullYear(), S.m.getMonth() + +v, 1);
