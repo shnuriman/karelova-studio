@@ -1827,3 +1827,21 @@ body, #v, .cd, .ap, .stl, .sti, .nav, .pn, input, select, textarea, .ib, .bt.gh,
 .ap .as { margin-top: 2px; font-size: 12.5px; line-height: 1.35; }
 .ap .ar2 { gap: 6px; }
 .ap .ar2 em { font-size: 13.5px; }
+
+
+/* ── Історія візитів клієнта ─────────────────────────────────── */
+.cd.hist { margin-top: 12px; padding: 16px; }
+.hist-top { display: flex; justify-content: space-between; gap: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--line); }
+.hist-top small { display: block; font-size: 12px; color: var(--mu); margin-bottom: 3px; }
+.hist-top b { font: 700 20px/1.1 Inter, system-ui, sans-serif; letter-spacing: -.02em; font-variant-numeric: tabular-nums; }
+.hist-top .r { text-align: right; }
+.hist-list { margin-top: 4px; }
+.hv { display: grid; grid-template-columns: 1fr auto; column-gap: 12px; row-gap: 2px; padding: 10px 0; border-bottom: 1px solid var(--line); cursor: pointer; }
+.hv:last-child { border-bottom: 0; padding-bottom: 0; }
+.hv:active { opacity: .7; }
+.hv-d { font: 500 12.5px/1.3 Inter, system-ui, sans-serif; color: var(--mu); font-variant-numeric: tabular-nums; }
+.hv-d i { font-style: normal; margin-left: 8px; padding: 1px 7px; border-radius: 8px; font-size: 11px; background: rgba(144,133,255,.14); color: var(--ac2); }
+.hv-s { grid-column: 1; grid-row: 2; font: 500 14px/1.35 Inter, system-ui, sans-serif; overflow-wrap: anywhere; }
+.hv-p { grid-column: 2; grid-row: 1 / span 2; align-self: center; font: 600 14px/1 Inter, system-ui, sans-serif; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.hv.st-canc .hv-s, .hv.st-canc .hv-p { text-decoration: line-through; opacity: .5; }
+.hv.st-canc .hv-d i { background: rgba(255,138,138,.14); color: var(--exp, #ff8a8a); }

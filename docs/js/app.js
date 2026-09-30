@@ -851,13 +851,16 @@ function cs(id) {
     </div>
     ${id ? '' : '<p class="mut" data-a="mo" style="color:var(--ac2);cursor:pointer">Детальне додавання ▾</p>'}
     ${id ? `
-      <div class="cd" style="margin-top:12px">
-        <b>Витрачено: ${money(spent)}</b><br>
-        <small class="mut">Історія візитів (${h.length})</small>
-        ${h.map(a => `<div class="li" data-a="edit" data-v="${a.id}">
-          <span>${fdt(a.date)} · ${esc(svTitle(a))}</span>
-          <small>${money(a.price)}</small>
-        </div>`).join('')}
+      <div class="cd hist">
+        <div class="hist-top">
+          <div><small>Витрачено</small><b>${money(spent)}</b></div>
+          <div class="r"><small>Візитів</small><b>${h.length}</b></div>
+        </div>
+        ${h.length ? `<div class="hist-list">${h.map(a => `<div class="hv st-${a.status}" data-a="edit" data-v="${a.id}">
+          <div class="hv-d">${fdt(a.date)}${a.status == 'plan' ? '<i>заплановано</i>' : a.status == 'canc' ? '<i>скасовано</i>' : ''}</div>
+          <div class="hv-s">${esc(svTitle(a))}</div>
+          <div class="hv-p">${money(a.price)}</div>
+        </div>`).join('')}</div>` : '<p class="mut" style="margin:12px 0 0">Ще немає візитів</p>'}
       </div>` : ''}
     <div class="row" style="margin-top:16px">
       ${closeBtn()}
