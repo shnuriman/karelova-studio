@@ -539,7 +539,7 @@ function apCard(a, s0) {
     const end = ft(tm(a.start) + a.dur);
     return `<div class="ap brk" data-a="edit" data-v="${a.id}">
       <div class="am">
-        <b>${a.start} – ${end} · ${esc(a.title || 'Перерва')}</b>
+        <b>${a.start} – ${end} · ${esc(a.title || 'Подія')}</b>
         ${a.comment ? `<div class="as">${esc(a.comment)}</div>` : ''}
       </div>
     </div>`;
@@ -742,8 +742,8 @@ function actSheet(t0) {
           <span>Створити новий запис</span>
         </button>
         <button type="button" class="act-b act-sec" data-a="act-brk" data-v="${t0 || ''}">
-          <span class="act-ico">${ic('pause')}</span>
-          <span>Додати перерву</span>
+          <span class="act-ico">${ic('cal')}</span>
+          <span>Додати подію</span>
         </button>
       </div>
     </div>
@@ -757,7 +757,7 @@ function breakSheet(id, t0) {
     : {
         id: '',
         type: 'break',
-        title: 'Перерва',
+        title: 'Подія',
         date: S.d,
         start: t0 || '09:00',
         dur: db.sched.step || 30,
@@ -774,14 +774,14 @@ function breakSheet(id, t0) {
   sheet(`<div class="pn pg">
     <div class="pg-h">
       <button type="button" class="ib pg-back" data-a="close" aria-label="Назад">${ic('prev')}</button>
-      <h3>${id ? 'Перерва' : 'Додати перерву'}</h3>
+      <h3>${id ? 'Подія' : 'Додати подію'}</h3>
       ${id ? `<button type="button" class="ib dl" data-a="dbrk" aria-label="Видалити" title="Видалити">${ic('trash')}</button>` : ''}
     </div>
     <div class="pg-b">
       <div class="fh first">${ic('file')} Назва</div>
-      <input id="bn" value="${esc(cur.title || 'Перерва')}" placeholder="Перерва" autocomplete="off">
+      <input id="bn" value="${esc(cur.title || 'Подія')}" placeholder="Назва події" autocomplete="off">
 
-      <div class="fh">${ic('clock')} Час перерви</div>
+      <div class="fh">${ic('clock')} Час події</div>
       <label>Дата</label>
       ${fld(`<input id="bdt" type="date" value="${cur.date}">`, 'cal')}
       <div class="row" style="gap:12px;margin-top:10px">
@@ -1436,7 +1436,7 @@ const A = {
       const clash = db.appts.filter(x => x.id != cur.id && x.date == cur.date && x.status != 'canc'
         && tm(x.start) < b1 && tm(x.start) + x.dur > a1);
       if (clash.length) {
-        const list = clash.map(x => '• ' + x.start + ' – ' + ft(tm(x.start) + x.dur) + ' · ' + (x.type == 'break' ? (x.title || 'Перерва') : cn(x.cid))).join('\n');
+        const list = clash.map(x => '• ' + x.start + ' – ' + ft(tm(x.start) + x.dur) + ' · ' + (x.type == 'break' ? (x.title || 'Подія') : cn(x.cid))).join('\n');
         if (!confirm('На цей час уже є запис:\n' + list + '\n\nЗберегти все одно? Обидва записи залишаться.')) return;
       }
     }
@@ -1458,7 +1458,7 @@ const A = {
   },
 
   sbrk: () => {
-    const title = (V('bn') || '').trim() || 'Перерва';
+    const title = (V('bn') || '').trim() || 'Подія';
     const date  = V('bdt') || cur.date || S.d;
     const start = V('bs');
     const end   = V('be');
@@ -1472,7 +1472,7 @@ const A = {
     const clash = db.appts.filter(x => x.id != cur.id && x.date == date && x.status != 'canc'
       && tm(x.start) < tStart + dur && tm(x.start) + x.dur > tStart);
     if (clash.length) {
-      const list = clash.map(x => '• ' + x.start + ' – ' + ft(tm(x.start) + x.dur) + ' · ' + (x.type == 'break' ? (x.title || 'Перерва') : cn(x.cid))).join('\n');
+      const list = clash.map(x => '• ' + x.start + ' – ' + ft(tm(x.start) + x.dur) + ' · ' + (x.type == 'break' ? (x.title || 'Подія') : cn(x.cid))).join('\n');
       if (!confirm('На цей час уже є запис:\n' + list + '\n\nЗберегти все одно? Обидва записи залишаться.')) return;
     }
 
@@ -1493,7 +1493,7 @@ const A = {
     save();
     S.d = cur.date;
     S.m = new Date(+cur.date.slice(0, 4), +cur.date.slice(5, 7) - 1, 1);
-    toast(title == 'Перерва' ? 'Перерву збережено' : 'Запис збережено');
+    toast('Подію збережено');
     done();
   },
 

@@ -120,6 +120,39 @@
     addEventListener('pageshow', set);
   })();
   </script>
+  <script>
+  // iOS PWA: одразу після запуску WebKit ще не перерахував safe-area і зони дотику:
+  // шапка заїжджає під статус-бар, а кнопки (слоти) не натискаються, доки не прокрутиш.
+  // Робимо «холосте» прокручування на 1px (як це робить перший свайп) кілька разів,
+  // поки користувач ще не торкнувся екрана, щоб примусити перерахунок.
+  (function(){
+    var touched = false;
+    function nudge(){
+      if (touched) return;
+      var v = document.getElementById('v');
+      if (!v) return;
+      var t = v.scrollTop;
+      set(t);
+      try { window.scrollTo(0, 0); } catch (e) {}
+      function set(top){
+        v.scrollTop = top + 1;
+        requestAnimationFrame(function(){
+          if (!touched) v.scrollTop = top;
+          void v.offsetHeight;
+        });
+      }
+    }
+    function stop(){ touched = true; }
+    addEventListener('touchstart', stop, { passive: true, capture: true });
+    addEventListener('pointerdown', stop, { passive: true, capture: true });
+    [50, 250, 600, 1200, 2000, 2800, 3600].forEach(function(ms){ setTimeout(nudge, ms); });
+    addEventListener('load', nudge);
+    addEventListener('pageshow', function(){ touched = false; nudge(); setTimeout(nudge, 400); });
+    document.addEventListener('visibilitychange', function(){
+      if (document.visibilityState === 'visible') { touched = false; nudge(); setTimeout(nudge, 400); }
+    });
+  })();
+  </script>
   <script src="config.js"></script>
   <script src="js/cloud.js?v=62"></script>
 </body>
