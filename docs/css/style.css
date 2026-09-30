@@ -1233,10 +1233,12 @@ input, select, textarea { font-size: 16px !important; }
 }
 .pk-x .i { width: 16px; height: 16px; }
 .pk-x:active { transform: scale(.9); }
-.pk-tabs { display: flex; gap: 8px; padding: 0 16px 10px; overflow-x: auto; scrollbar-width: none; }
+.pk-h, .pk-f { flex: none; }
+.pk-tabs { flex: 0 0 auto; display: flex; gap: 8px; padding: 2px 16px 12px; overflow-x: auto; overflow-y: hidden; scrollbar-width: none; }
 .pk-tabs::-webkit-scrollbar { display: none; }
 .pk-tab {
-  flex: none; padding: 8px 16px; border-radius: 999px; font: 500 13.5px/1 Inter, sans-serif;
+  flex: 0 0 auto; height: 36px; padding: 0 18px; display: inline-flex; align-items: center; justify-content: center; white-space: nowrap;
+  margin: 0; border-radius: 999px; font: 500 14px/1 Inter, sans-serif;
   color: var(--mu); background: transparent; border: 1px solid var(--bo); cursor: pointer;
   transition: background .15s, color .15s, border-color .15s;
 }
@@ -1245,7 +1247,7 @@ input, select, textarea { font-size: 16px !important; }
 .pk-g[hidden] { display: none; }
 .pk-l .sgh { padding: 10px 6px 6px; font-size: 11px; letter-spacing: .08em; text-transform: uppercase; color: var(--mu); }
 .pk-r {
-  display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin-bottom: 8px;
+  display: flex; align-items: center; gap: 12px; padding: 10px 14px; margin-bottom: 8px;
   border-radius: 16px; border: 1px solid var(--bo); background: rgba(255,255,255,.025);
   transition: background .15s, border-color .15s;
 }
