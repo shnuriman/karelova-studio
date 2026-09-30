@@ -28,6 +28,7 @@ const fdt = d => d.split('-').reverse().join('.');
 const money = n => Math.round(n).toLocaleString('uk-UA') + ' ₴';
 
 const MN = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
+const MN_GEN = ['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
 const DN = ['Пн','Вт','Ср','Чт','Пт','Сб','Нд'];
 const ST = { plan: 'Заплановано', done: 'Завершено', canc: 'Скасовано' };
 const cls = c => c === 'Подологія' ? 'mi' : 'pe';
@@ -194,7 +195,7 @@ const sig = () => {
 const dirty = () => $('#sh').classList.contains('on')
   && (S.pgDirty
     ? S.pgDirty()
-    : !!$('#sh [data-a=sa], #sh [data-a=sc], #sh [data-a=se], #sh [data-a=sv]') && S.snap !== sig());
+    : !!$('#sh [data-a=sa], #sh [data-a=sc], #sh [data-a=se], #sh [data-a=sv], #sh [data-a=sbrk]') && S.snap !== sig());
 
 /* ── ICONS ──────────────────────────────────────────────────── */
 const P = {
@@ -218,6 +219,7 @@ const P = {
   down:    '<path d="M6 9.5l6 6 6-6"/>',
   moon:    '<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/>',
   sun:     '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"/>',
+  pause:   '<path d="M8 5.5v13M16 5.5v13" stroke-width="3.2"/>',
   work:    '<rect x="3.5" y="7.5" width="17" height="12" rx="3"/><path d="M9 7.5V6a2 2 0 012-2h2a2 2 0 012 2v1.5M3.5 12.5h17"/>',
   x:       '<path d="M6 6l12 12M18 6L6 18"/>',
   checks:  '<path d="M3.5 12.5L8 17l6-10M13 15l1.5 1.5L21 8"/>',
@@ -295,7 +297,7 @@ function sch() {
     '<i></i>'.repeat((new Date(y, mo, 1).getDay() + 6) % 7);
   for (let i = 1; i <= n; i++) {
     const id = iso(new Date(y, mo, i));
-    const c = db.appts.filter(a => a.date == id && a.status != 'canc').length;
+    const c = db.appts.filter(a => a.date == id && a.status != 'canc' && a.type != 'break').length;
     const off = !dcfg(id).on;
     cells += `<b class="dy ${id == S.d ? 'sel' : ''} ${id == today ? 'today' : ''} ${off ? 'off' : ''}"
                  data-a="day" data-v="${id}"><span class="dn">${i}${c ? `<sup>${c}</sup>` : ''}</span></b>`;
@@ -333,7 +335,7 @@ function sch() {
     act.filter(a => !shown.has(a.id)).forEach(a => { sl += apCard(a, sv(a.svc[0])); });
   }
   sl += list.filter(a => a.status == 'canc').map(a => apCard(a, sv(a.svc[0]))).join('');
-  const dayLabel = dt.getDate() + ' ' + MN[dt.getMonth()].toLowerCase().replace(/ь$/, 'я').replace(/й$/, 'я') + ', ' + DN[(dt.getDay() + 6) % 7];
+  const dayLabel = dt.getDate() + ' ' + MN_GEN[dt.getMonth()] + ', ' + DN[(dt.getDay() + 6) % 7];
   return `<h1>${MN[mo]} ${y}
     <span>
       <button class="ib" data-a="pm" data-v="-1">${ic('prev')}</button>
@@ -347,6 +349,21 @@ function sch() {
 }
 
 function apCard(a, s0) {
+  if (a.type === 'break') {
+    const end = ft(tm(a.start) + a.dur);
+    return `<div class="ap brk" data-a="edit" data-v="${a.id}">
+      <div class="am">
+        <div class="brk-head">
+          <span class="brk-ico">${ic('pause')}</span>
+          <b>${a.start} – ${end} · ${esc(a.title || 'Перерва')}</b>
+        </div>
+        ${a.comment ? `<div class="as">${esc(a.comment)}</div>` : ''}
+      </div>
+      <div class="ar2">
+        <span class="brk-tag">${ic('pause')} Перерва</span>
+      </div>
+    </div>`;
+  }
   const icn = { plan: 'clock', done: 'check', canc: 'x' }[a.status] || 'clock';
   const lines = [...svCount(a.svc)].map(([i, n]) => {
     const x = sv(i);
@@ -520,6 +537,79 @@ function apSheet(id, t0) {
   recH();
 }
 
+/* ── ПОПАП «ОБЕРИ ДІЮ» ────────────────────────────────────────── */
+function actSheet(t0) {
+  const dt = new Date(S.d + 'T00:00');
+  const dStr = dt.getDate() + ' ' + MN_GEN[dt.getMonth()];
+  const sub = t0 ? `${dStr} · ${t0}` : dStr;
+  sheet(`
+    <div class="act-pop">
+      <div class="act-h">
+        <div class="act-t">Обери дію</div>
+        <div class="act-sub">${sub}</div>
+      </div>
+      <div class="act-btns">
+        <button type="button" class="act-b act-pri" data-a="act-ap" data-v="${t0 || ''}">
+          <span class="act-ico">${ic('plus')}</span>
+          <span>Створити новий запис</span>
+        </button>
+        <button type="button" class="act-b act-sec" data-a="act-brk" data-v="${t0 || ''}">
+          <span class="act-ico">${ic('pause')}</span>
+          <span>Додати перерву</span>
+        </button>
+      </div>
+    </div>
+  `);
+}
+
+/* ── ФОРМА ПЕРЕРВИ ─────────────────────────────────────────── */
+function breakSheet(id, t0) {
+  const a = id
+    ? db.appts.find(x => x.id == id)
+    : {
+        id: '',
+        type: 'break',
+        title: 'Перерва',
+        date: S.d,
+        start: t0 || '09:00',
+        dur: db.sched.step || 30,
+        comment: '',
+        price: 0,
+        svc: [],
+        status: 'plan',
+        cid: '',
+        photos: []
+      };
+  cur = JSON.parse(JSON.stringify(a));
+  cur.end = ft(tm(cur.start) + (cur.dur || 30));
+
+  sheet(`<div class="pn pg">
+    <div class="pg-h">
+      <button type="button" class="ib pg-back" data-a="close" aria-label="Назад">${ic('prev')}</button>
+      <h3>${id ? 'Перерва' : 'Додати перерву'}</h3>
+      ${id ? `<button type="button" class="ib dl" data-a="dbrk" aria-label="Видалити" title="Видалити">${ic('trash')}</button>` : ''}
+    </div>
+    <div class="pg-b">
+      <div class="fh first">${ic('file')} Назва</div>
+      <input id="bn" value="${esc(cur.title || 'Перерва')}" placeholder="Перерва" autocomplete="off">
+
+      <div class="fh">${ic('clock')} Час перерви</div>
+      <label>Дата</label>
+      ${fld(`<input id="bdt" type="date" value="${cur.date}">`, 'cal')}
+      <div class="row" style="gap:12px;margin-top:10px">
+        <div style="flex:1"><label>Від</label>${fld(`<input id="bs" type="time" value="${cur.start}">`, 'clock')}</div>
+        <div style="flex:1"><label>До</label>${fld(`<input id="be" type="time" value="${cur.end}">`, 'clock')}</div>
+      </div>
+
+      <div class="fh">${ic('msg')} Коментар</div>
+      <textarea id="bm" placeholder="Напишіть коментар">${esc(cur.comment || '')}</textarea>
+    </div>
+    <div class="pg-f">
+      <button type="button" class="bt act-pri" data-a="sbrk" style="justify-content:center;height:52px;border-radius:16px">${ic('check')} Зберегти</button>
+    </div>
+  </div>`, true);
+}
+
 const phs = () => {
   $('#ph') && ($('#ph').innerHTML =
     cur.photos.map((p, i) => `<img src="${p}" data-a="dp" data-v="${i}">`).join('') +
@@ -620,7 +710,7 @@ function sum(done, ex) {
 }
 
 const mstat = k => sum(
-  db.appts.filter(a => a.status == 'done' && a.date.startsWith(k)),
+  db.appts.filter(a => a.status == 'done' && a.type != 'break' && a.date.startsWith(k)),
   db.expenses.filter(e => e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date))
 );
 
@@ -639,8 +729,10 @@ const svShort = a => {
 const secH = (t, r, first) => `<div class="sh2 ${first ? 'first' : ''}"><span>${t}</span>${r ? `<em>${r}</em>` : ''}</div>`;
 
 // Список прийомів: дата · клієнт і послуга · сума і час (новіші зверху)
-const apRows = ds => ds.length
-  ? ds.slice().sort((a, b) => b.date.localeCompare(a.date) || tm(b.start) - tm(a.start)).map(a => {
+const apRows = ds => {
+  const f = ds.filter(a => a.type != 'break');
+  return f.length
+    ? f.slice().sort((a, b) => b.date.localeCompare(a.date) || tm(b.start) - tm(a.start)).map(a => {
       const s0 = sv(a.svc[0]);
       const wd = DN[(new Date(a.date + 'T00:00').getDay() + 6) % 7];
       return `
@@ -651,6 +743,7 @@ const apRows = ds => ds.length
       </div>`;
     }).join('')
   : '<p class="mut" style="margin:0">Прийомів немає.</p>';
+};
 
 // Виконані роботи: згруповано за напрямком, у кожного напрямку підсумок
 const workList = ws => {
@@ -676,14 +769,14 @@ const exRows = ex => ex.length
   : '<p class="mut" style="margin:0">Витрат немає.</p>';
 
 function st() {
-  const all = sum(db.appts.filter(a => a.status == 'done'), db.expenses);
+  const all = sum(db.appts.filter(a => a.status == 'done' && a.type != 'break'), db.expenses);
   const cur = mkey(new Date());
   const pd = new Date(); pd.setDate(1); pd.setMonth(pd.getMonth() - 1);
   const prev = mkey(pd);
 
   // усі місяці, де є дані, + поточний; найновіші зверху
   const keys = new Set([cur]);
-  db.appts.forEach(a => { if (a.status == 'done') keys.add(a.date.slice(0, 7)); });
+  db.appts.forEach(a => { if (a.status == 'done' && a.type != 'break') keys.add(a.date.slice(0, 7)); });
   db.expenses.forEach(e => keys.add(e.date.slice(0, 7)));
   const list = [...keys].filter(k => /^\d{4}-\d{2}$/.test(k)).sort().reverse();
 
@@ -1084,8 +1177,14 @@ const A = {
   },
   ps:  v => { S.sm = new Date(S.sm.getFullYear(), S.sm.getMonth() + +v, 1); render(); },
 
-  new:  v => apSheet('', v),
-  edit: v => apSheet(v),
+  new:  v => actSheet(v),
+  edit: v => {
+    const a = db.appts.find(x => x.id == v);
+    if (a && a.type === 'break') breakSheet(v);
+    else apSheet(v);
+  },
+  'act-ap':  v => apSheet('', v),
+  'act-brk': v => breakSheet('', v),
 
   // клієнт: вибір зі списку / створення нового прямо з пошуку
   pcl: v => {
@@ -1146,7 +1245,7 @@ const A = {
       const clash = db.appts.filter(x => x.id != cur.id && x.date == cur.date && x.status != 'canc'
         && tm(x.start) < b1 && tm(x.start) + x.dur > a1);
       if (clash.length) {
-        const list = clash.map(x => '• ' + x.start + ' – ' + ft(tm(x.start) + x.dur) + ' · ' + cn(x.cid)).join('\n');
+        const list = clash.map(x => '• ' + x.start + ' – ' + ft(tm(x.start) + x.dur) + ' · ' + (x.type == 'break' ? (x.title || 'Перерва') : cn(x.cid))).join('\n');
         if (!confirm('На цей час уже є запис:\n' + list + '\n\nЗберегти все одно? Обидва записи залишаться.')) return;
       }
     }
@@ -1160,10 +1259,59 @@ const A = {
   },
 
   da: () => {
-    if (confirm('\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u0437\u0430\u043f\u0438\u0441?')) {
+    if (confirm('Видалити запис?')) {
       db.appts = db.appts.filter(a => a.id != cur.id);
       save();
       done();
+    }
+  },
+
+  sbrk: () => {
+    const title = (V('bn') || '').trim() || 'Перерва';
+    const date  = V('bdt') || cur.date || S.d;
+    const start = V('bs');
+    const end   = V('be');
+    const comment = (V('bm') || '').trim();
+    if (!start || !end) { toast('Вкажіть час', 'warn'); return; }
+    const tStart = tm(start);
+    const tEnd = tm(end);
+    if (tEnd <= tStart) { toast('Час закінчення має бути пізніше початку', 'warn'); return; }
+    const dur = tEnd - tStart;
+
+    const clash = db.appts.filter(x => x.id != cur.id && x.date == date && x.status != 'canc'
+      && tm(x.start) < tStart + dur && tm(x.start) + x.dur > tStart);
+    if (clash.length) {
+      const list = clash.map(x => '• ' + x.start + ' – ' + ft(tm(x.start) + x.dur) + ' · ' + (x.type == 'break' ? (x.title || 'Перерва') : cn(x.cid))).join('\n');
+      if (!confirm('На цей час уже є запис:\n' + list + '\n\nЗберегти все одно? Обидва записи залишаться.')) return;
+    }
+
+    cur.type = 'break';
+    cur.title = title;
+    cur.date = date;
+    cur.start = start;
+    cur.dur = dur;
+    cur.comment = comment;
+    cur.price = 0;
+    cur.svc = [];
+    cur.status = 'plan';
+    cur.cid = '';
+
+    if (cur.id) db.appts = db.appts.map(a => a.id == cur.id ? cur : a);
+    else { cur.id = uid(); db.appts.push(cur); }
+
+    save();
+    S.d = cur.date;
+    S.m = new Date(+cur.date.slice(0, 4), +cur.date.slice(5, 7) - 1, 1);
+    toast(title == 'Перерва' ? 'Перерву збережено' : 'Запис збережено');
+    done();
+  },
+
+  dbrk: () => {
+    if (confirm('Видалити цей запис?')) {
+      db.appts = db.appts.filter(a => a.id != cur.id);
+      save();
+      done();
+      toast('Видалено');
     }
   },
 
