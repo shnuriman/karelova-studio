@@ -40,23 +40,6 @@ const LOGIN_CSS=`
   }
   #kr-logo-wrap{
     margin:0 auto 28px;
-    padding:16px 20px 14px;
-    background:rgba(9,187,198,.06);
-    border:1px solid rgba(9,187,198,.15);
-    border-radius:16px;
-  }
-  #kr-sub{
-    text-align:center;
-    font:500 13px/1 Inter,sans-serif;
-    letter-spacing:.08em;
-    text-transform:uppercase;
-    color:rgba(9,187,198,.7);
-    margin-bottom:28px;
-  }
-  #kr-divider{
-    height:1px;
-    background:linear-gradient(90deg,transparent,rgba(65,95,150,.35),transparent);
-    margin-bottom:24px;
   }
   .kr-label{
     display:block;
@@ -130,8 +113,6 @@ const btnHtml='width:100%;padding:14px;border:0;border-radius:14px;background:li
 
 const msg=(t,retry)=>show(
   `<div id="kr-logo-wrap">${LOGO_SVG}</div>
-   <div id="kr-sub">CRM System</div>
-   <div id="kr-divider"></div>
    <p style="line-height:1.6;margin:0 0 20px;text-align:center;color:rgba(232,236,244,.75)">${esc(t)}</p>`+
   (retry?`<button id="kr-r" style="${btnHtml}">Спробувати ще</button>`:'')
 )||(retry&&document.getElementById('kr-r').addEventListener('click',()=>location.reload()));
@@ -139,8 +120,6 @@ const msg=(t,retry)=>show(
 function login(){return new Promise(res=>{
   show(`
     <div id="kr-logo-wrap">${LOGO_SVG}</div>
-    <div id="kr-sub">CRM System</div>
-    <div id="kr-divider"></div>
     <label class="kr-label">Email</label>
     <input id="kr-e" class="kr-inp" type="email" autocomplete="username" placeholder="your@email.com">
     <label class="kr-label">Пароль</label>
