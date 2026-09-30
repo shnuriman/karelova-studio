@@ -76,8 +76,9 @@ const svCount = svc => { const m = new Map(); svc.forEach(i => m.set(i, (m.get(i
 const svTitle = a => [...svCount(a.svc)].map(([i, n]) => { const x = sv(i); return x ? x.title + (n > 1 ? ' ×' + n : '') : ''; }).filter(Boolean).join(', ') || 'Без послуги';
 const dm = m => { const h = m / 60 | 0, r = m % 60; return (h ? h + ' год' : '') + (h && r ? ' ' : '') + (r || !h ? r + ' хв' : ''); };
 
-const sheet = h => {
-  $('#sh').innerHTML =
+const sheet = (h, page) => {
+  S.bk = null; S.pgDirty = null;
+  $('#sh').innerHTML = page ? h :
     '<div class="bd" data-a="close"></div><div class="pn"><div class="hd"></div>' + h + '</div>';
   $('#sh').className = 'on';
   S.snap = sig();
@@ -91,8 +92,9 @@ const sig = () => {
 };
 // шторка з кнопкою «Зберегти» — тоді є що втрачати
 const dirty = () => $('#sh').classList.contains('on')
-  && !!$('#sh [data-a=sa], #sh [data-a=sc], #sh [data-a=se], #sh [data-a=sv]')
-  && S.snap !== sig();
+  && (S.pgDirty
+    ? S.pgDirty()
+    : !!$('#sh [data-a=sa], #sh [data-a=sc], #sh [data-a=se], #sh [data-a=sv]') && S.snap !== sig());
 
 /* ── ICONS ──────────────────────────────────────────────────── */
 const P = {
@@ -119,6 +121,7 @@ const P = {
   x:       '<path d="M6 6l12 12M18 6L6 18"/>',
   checks:  '<path d="M3.5 12.5L8 17l6-10M13 15l1.5 1.5L21 8"/>',
   minus:   '<path d="M5 12h14"/>',
+  list:    '<path d="M9.5 6.5H20M9.5 12H20M9.5 17.5H20"/><circle cx="4.8" cy="6.5" r=".6"/><circle cx="4.8" cy="12" r=".6"/><circle cx="4.8" cy="17.5" r=".6"/>',
   clock:   '<circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/>',
   flag:    '<path d="M6 21V4M6 5h11l-2.5 4L17 13H6"/>',
   cash:    '<rect x="3" y="6.5" width="18" height="11" rx="3"/><circle cx="12" cy="12" r="2.5"/>',
@@ -280,15 +283,41 @@ function svHtml() {
   }).join('');
 }
 
-const spHtml = () => {
-  if (!db.services.length) return '<div class="sg"><small>Додайте послуги в Налаштуваннях</small></div>';
-  return [...new Set(db.services.map(x => x.cat))].map(c =>
-    `<div class="sgh">${esc(c)}</div>` +
-    db.services.filter(x => x.cat == c).map(x =>
-      `<div class="sg" data-a="asv" data-v="${x.id}"><b>${esc(x.title)}</b><small>${money(x.price)} · ${dm(x.dur)}</small></div>`
-    ).join('')
-  ).join('');
+/* Попап вибору послуг: можна відмітити кілька та додати разом */
+let pkSel = new Set();
+const pkFoot = () => {
+  const ids = [...pkSel], ss = ids.map(sv).filter(Boolean);
+  const b = $('#pka');
+  if (!b) return;
+  b.disabled = !ss.length;
+  b.innerHTML = ic('plus') + (ss.length
+    ? ` Додати все (${ss.length}) · ${money(ss.reduce((x, y) => x + y.price, 0))}`
+    : ' Оберіть послуги');
 };
+const pkOpen = () => {
+  pkSel = new Set();
+  let m = $('#pkm');
+  if (!m) { m = document.createElement('div'); m.id = 'pkm'; document.body.appendChild(m); }
+  const list = !db.services.length
+    ? '<div class="sg"><small>Додайте послуги в Налаштуваннях</small></div>'
+    : [...new Set(db.services.map(x => x.cat))].map(c =>
+        `<div class="sgh">${esc(c)}</div>` +
+        db.services.filter(x => x.cat == c).map(x =>
+          `<div class="pk-r ${cls(x.cat)}" data-a="tgs" data-v="${x.id}"><i class="pk-c">${ic('check')}</i>
+             <span class="t"><b>${esc(x.title)}</b><small>${money(x.price)} · ${dm(x.dur)}</small></span></div>`
+        ).join('')
+      ).join('');
+  m.innerHTML = `<div class="pk-bd" data-a="pkx"></div>
+    <div class="pk-pn">
+      <div class="pk-h"><h3>Оберіть послуги</h3>
+        <button type="button" class="ib" data-a="pkx" aria-label="Закрити">${ic('x')}</button></div>
+      <div class="pk-l">${list}</div>
+      <div class="pk-f"><button type="button" class="bt" id="pka" data-a="apk"></button></div>
+    </div>`;
+  m.className = 'on';
+  pkFoot();
+};
+const pkClose = () => { const m = $('#pkm'); if (m) m.className = ''; };
 
 const endOf = () => ft(Math.min(tm(cur.start) + cur.dur, 1439));
 const syncTimes = () => { $('#xs').value = cur.start; $('#xe').value = endOf(); };
@@ -342,8 +371,13 @@ function apSheet(id, t0) {
     : { id: '', date: S.d, start: t0, dur: db.sched.step, price: 0, svc: [], status: 'plan', cid: '', comment: '', photos: [] };
   cur = JSON.parse(JSON.stringify(a));
   cur.svc = cur.svc || [];
-  sheet(`
-    ${shHead(id ? 'Запис' : 'Новий запис', id ? 'da' : '')}
+  sheet(`<div class="pn pg">
+    <div class="pg-h">
+      <button type="button" class="ib pg-back" data-a="close" aria-label="Назад">${ic('prev')}</button>
+      <h3>${id ? 'Запис' : 'Новий запис'}</h3>
+      ${id ? `<button type="button" class="ib dl" data-a="da" aria-label="Видалити" title="Видалити">${ic('trash')}</button>` : ''}
+    </div>
+    <div class="pg-b">
 
     <div class="fh first">${ic('users')} Клієнт</div>
     <div class="fld ${cur.cid ? 'ok' : ''}" id="xcw">
@@ -365,7 +399,6 @@ function apSheet(id, t0) {
     <div class="fh">${ic('file')} Послуги</div>
     <div id="xsv">${svHtml()}</div>
     <button type="button" class="bt gh" data-a="tsp">${ic('plus')} Додати послугу</button>
-    <div class="sgl pk" id="xpk">${spHtml()}</div>
 
     <div class="fh">${ic('cash')} Ціна</div>
     <div class="fld"><input id="xp" type="number" inputmode="decimal" min="0" value="${cur.price}"><em class="sf">₴</em></div>
@@ -379,11 +412,9 @@ function apSheet(id, t0) {
     <div class="fh">${ic('msg')} Коментар</div>
     <textarea id="xm" placeholder="Напишіть коментар тут">${esc(cur.comment)}</textarea>
 
-    <div class="row" style="margin-top:18px">
-      ${closeBtn()}
-      <button class="bt" data-a="sa">${ic('check')} Зберегти</button>
     </div>
-  `);
+    <div class="pg-f"><button type="button" class="bt" data-a="sa">${ic('check')} Зберегти</button></div>
+  </div>`, true);
   thint();
   recH();
 }
@@ -499,28 +530,49 @@ const catBars = cat => {
     <div class="bar"><i style="width:${cat[c] / mx * 100}%;background:var(${c == 'Подологія' ? '--mi2' : '--pe2'})"></i></div>`).join('');
 };
 
-// Список прийомів: кого приймали і яку послугу робили (новіші зверху)
+// Коротка назва послуг запису: «Апаратний педикюр +3»
+const svShort = a => {
+  const m = [...svCount(a.svc)].map(([i, n]) => { const x = sv(i); return x ? x.title + (n > 1 ? ' ×' + n : '') : ''; }).filter(Boolean);
+  return m.length ? m[0] + (m.length > 1 ? ' +' + (m.length - 1) : '') : 'Без послуги';
+};
+const secH = (t, r, first) => `<div class="sh2 ${first ? 'first' : ''}"><span>${t}</span>${r ? `<em>${r}</em>` : ''}</div>`;
+
+// Список прийомів: дата · клієнт і послуга · сума і час (новіші зверху)
 const apRows = ds => ds.length
   ? ds.slice().sort((a, b) => b.date.localeCompare(a.date) || tm(b.start) - tm(a.start)).map(a => {
-      const names = svTitle(a);
       const s0 = sv(a.svc[0]);
       const wd = DN[(new Date(a.date + 'T00:00').getDay() + 6) % 7];
       return `
       <div class="ar" data-a="edit" data-v="${a.id}">
         <span class="dt ${s0 ? cls(s0.cat) : 'pe'}"><b>${+a.date.slice(8)}</b><small>${wd}</small></span>
-        <span class="t"><b>${esc(cn(a.cid))}</b><small>${esc(names)} · ${a.start}</small></span>
-        <em class="pl">+${money(a.price)}</em>
+        <span class="t"><b>${esc(cn(a.cid))}</b><small title="${esc(svTitle(a))}">${esc(svShort(a))}</small></span>
+        <span class="rt"><em class="pl">+${money(a.price)}</em><small>${a.start}</small></span>
       </div>`;
     }).join('')
   : '<p class="mut" style="margin:0">Прийомів немає.</p>';
 
-const workList = ws => ws.length
-  ? `<div class="wk">${ws.map(w => `
-      <div class="wr">
-        <i style="background:var(${w.cat == 'Подологія' ? '--mi2' : w.cat == 'Шугаринг' ? '--pe2' : '--mu'})"></i>
-        <span>${esc(w.title)}</span><em>×${w.n}</em><b>${money(w.amt)}</b>
-      </div>`).join('')}</div>`
-  : '<p class="mut" style="margin:0 0 4px">Виконаних робіт немає.</p>';
+// Виконані роботи: згруповано за напрямком, у кожного напрямку підсумок
+const workList = ws => {
+  if (!ws.length) return '<p class="mut" style="margin:0 0 4px">Виконаних робіт немає.</p>';
+  const cats = [...new Set(ws.map(w => w.cat))]
+    .sort((x, y) => (CATS.indexOf(x) < 0 ? 99 : CATS.indexOf(x)) - (CATS.indexOf(y) < 0 ? 99 : CATS.indexOf(y)));
+  return `<div class="wk">${cats.map(c => {
+    const l = ws.filter(w => w.cat == c);
+    const col = c == 'Подологія' ? '--mi2' : c == 'Шугаринг' ? '--pe2' : '--mu';
+    return `<div class="wg">
+      <div class="wgh"><i style="background:var(${col})"></i><span>${esc(c || 'Інше')}</span><b>${money(l.reduce((s, w) => s + w.amt, 0))}</b></div>
+      ${l.map(w => `<div class="wr"><span>${esc(w.title)}</span><em>×${w.n}</em><b>${money(w.amt)}</b></div>`).join('')}
+    </div>`;
+  }).join('')}</div>`;
+};
+
+const exRows = ex => ex.length
+  ? ex.map(e => `
+      <div class="er" data-a="es" data-v="${e.id}">
+        <span class="t"><b>${esc(e.cat)}</b><small>${fdt(e.date)}${e.desc ? ' · ' + esc(e.desc) : ''}</small></span>
+        <em class="mn">−${money(e.amount)}</em>
+      </div>`).join('')
+  : '<p class="mut" style="margin:0">Витрат немає.</p>';
 
 function st() {
   const all = sum(db.appts.filter(a => a.status == 'done'), db.expenses);
@@ -554,16 +606,12 @@ function st() {
           <div><small>Клієнтів</small><b>${m.cl}</b></div>
           <div><small>Записів</small><b>${m.done.length}</b></div>
         </div>
-        <div class="sec">Прийоми · ${m.done.length}</div>
+        ${secH('Прийоми', m.done.length, true)}
         ${apRows(m.done)}
-        <div class="sec" style="margin-top:14px">Виконані роботи</div>
+        ${secH('Виконані роботи')}
         ${workList(m.works)}
-        <div class="sec" style="margin-top:14px">Витрати</div>
-        ${m.ex.map(e => `
-          <div class="li" data-a="es" data-v="${e.id}">
-            <span>${esc(e.cat)}<br><small class="mut">${fdt(e.date)} ${esc(e.desc)}</small></span>
-            <b class="exp">−${money(e.amount)}</b>
-          </div>`).join('') || '<p class="mut" style="margin:6px 0 0">Витрат немає.</p>'}
+        ${secH('Витрати', m.ex.length ? '−' + money(m.out) : '')}
+        ${exRows(m.ex)}
       </div></div></div>
     </div>`;
   };
@@ -615,67 +663,164 @@ function es(id) {
 }
 
 /* ── SETTINGS TAB ───────────────────────────────────────────── */
-function set() {
-  const d = db.sched.days;
-  return `
-    <h1>Налаштування</h1>
-    <h3>Графік роботи</h3>
-    <div class="cd">
-      ${DN.map((nm, i) => `
-        <div class="dr">
-          <input type="checkbox" data-c="on" data-d="${i + 1}" ${d[i + 1].on ? 'checked' : ''}>
-          <b>${nm}</b>
-          <input type="time" data-c="s" data-d="${i + 1}" value="${d[i + 1].s}">
-          <input type="time" data-c="e" data-d="${i + 1}" value="${d[i + 1].e}">
-        </div>`).join('')}
-      <label>Крок слотів</label>
-      <select data-c="step">
-        ${[15, 30, 60].map(x => `<option value="${x}" ${x == db.sched.step ? 'selected' : ''}>${x} хв</option>`).join('')}
-      </select>
-    </div>
-    <h3 style="display:flex;justify-content:space-between;margin-top:18px">
-      Каталог послуг <button class="ib" data-a="ss" data-v="">${ic('plus')}</button>
-    </h3>
-    ${CATS.map(c => `
-      <small class="mut" style="display:block;margin:8px 0 4px">${c}</small>
-      ${db.services.filter(s => s.cat == c).map(s => `
-        <div class="ap ${cls(c)}" data-a="ss" data-v="${s.id}">
-          <b><span>${esc(s.title)}</span><span>${money(s.price)}</span></b>
-          <small>${s.dur} хв</small>
-        </div>`).join('') || '<p class="mut">Порожньо</p>'}
-    `).join('')}
-    <h3 style="margin-top:22px">Дані</h3>
-    <div class="row">
-      <button class="bt gh" data-a="ex">${ic('download')} Експорт копії</button>
-      <button class="bt gh" data-a="im">${ic('upload')} Імпорт копії</button>
-    </div>
-    <div class="row" style="margin-top:10px">
-      <button class="bt gh" data-a="lo">${ic('logout')} Вийти</button>
-    </div>
-  `;
+// закінчення: 1 послуга / 2 послуги / 5 послуг
+const plu = (n, a, b, c) => { const m = n % 100, d = n % 10; return m > 10 && m < 20 ? c : d == 1 ? a : d >= 2 && d <= 4 ? b : c; };
+
+// короткий підсумок графіка для рядка налаштувань: «Пн–Пт · 09:00–18:00»
+function schSum() {
+  const d = db.sched.days, on = DN.map((_, i) => i + 1).filter(i => d[i].on);
+  if (!on.length) return 'Немає робочих днів';
+  const parts = [];
+  let s = on[0], p = on[0];
+  for (const i of on.slice(1).concat(0)) {
+    if (i == p + 1) { p = i; continue; }
+    parts.push(s == p ? DN[s - 1] : p - s == 1 ? DN[s - 1] + ', ' + DN[p - 1] : DN[s - 1] + '–' + DN[p - 1]);
+    s = p = i;
+  }
+  const hs = new Set(on.map(i => d[i].s + '–' + d[i].e));
+  return parts.join(', ') + ' · ' + (hs.size == 1 ? [...hs][0] : 'різні години');
 }
 
+const stRow = (ico, tone, title, sub, badge, act, noChv) => `
+  <div class="sti" role="button" tabindex="0" data-a="${act}">
+    <span class="ico ${tone}">${ic(ico)}</span>
+    <span class="t"><b>${title}</b>${sub ? `<small>${sub}</small>` : ''}</span>
+    ${badge == 'ok' ? `<i class="bdg ok">${ic('check')}</i>` : badge == 'warn' ? '<i class="bdg warn">!</i>' : ''}
+    ${noChv ? '' : `<span class="chv">${ic('next')}</span>`}
+  </div>`;
+
+function set() {
+  const n = db.services.length;
+  const anyDay = DN.some((_, i) => db.sched.days[i + 1].on);
+  return `
+    <h1>Налаштування</h1>
+    <div class="stl">
+      ${stRow('cal', 't1', 'Графік роботи', schSum(), anyDay ? 'ok' : 'warn', 'gsch')}
+      ${stRow('list', 't2', 'Послуги', n ? n + ' ' + plu(n, 'послуга', 'послуги', 'послуг') : 'Ще не додано', n ? 'ok' : 'warn', 'gsvc')}
+      ${stRow('download', 't3', 'Резервна копія', 'Експорт та імпорт даних', '', 'gbkp')}
+    </div>
+    <div class="stl">
+      ${stRow('logout', 't4', 'Вийти', '', '', 'lo', true)}
+    </div>`;
+}
+
+/* ── Сторінки налаштувань (повний екран зі стрілкою «назад») ── */
+const pgHead = (title, right) => `<div class="pg-h">
+    <button type="button" class="ib pg-back" data-a="close" aria-label="Назад">${ic('prev')}</button>
+    <h3>${title}</h3>${right || ''}
+  </div>`;
+const pgOpen = (h, back, dirtyFn) => { sheet(h, true); S.bk = back || null; S.pgDirty = dirtyFn || null; };
+// повернення на список налаштувань (оновлює підсумки в рядках)
+const stBack = () => { $('#sh').className = ''; render(true); };
+
+/* Графік роботи */
+const PS = {};
+const psDay = () => {
+  const c = PS.d.days[PS.day];
+  return `
+    <div class="dch">${DN.map((n, i) =>
+      `<button type="button" class="${PS.day == i + 1 ? 'on' : ''} ${PS.d.days[i + 1].on ? '' : 'off'}" data-a="gday" data-v="${i + 1}">${n}</button>`).join('')}</div>
+    <div class="swr"><span>Робочий день</span><label class="sw"><input type="checkbox" data-p="on" ${c.on ? 'checked' : ''}><i></i></label></div>
+    <div class="fh">${ic('clock')} Робочі години</div>
+    <div class="${c.on ? '' : 'dis'}">
+      <div class="row" style="gap:10px">
+        <div><label>Початок</label>${fld(`<input type="time" data-p="s" value="${c.s}">`, 'clock')}</div>
+        <div><label>Кінець</label>${fld(`<input type="time" data-p="e" value="${c.e}">`, 'clock')}</div>
+      </div>
+      <button type="button" class="bt gh" data-a="gcp" style="margin-top:14px">${ic('checks')} Застосувати години до всіх днів</button>
+    </div>`;
+};
+const psUpd = () => { const b = $('#pgsv'); if (b) b.disabled = JSON.stringify(PS.d) === PS.o; };
+const psChange = t => {
+  const p = t.dataset.p, c = PS.d.days[PS.day];
+  if (p == 'step') PS.d.step = +t.value;
+  else if (p == 'on') { c.on = t.checked ? 1 : 0; $('#psd').innerHTML = psDay(); }
+  else if (t.value) c[p] = t.value;
+  else t.value = c[p];
+  psUpd();
+};
+
+function schPg() {
+  PS.d = JSON.parse(JSON.stringify({ step: db.sched.step, days: db.sched.days }));
+  PS.o = JSON.stringify(PS.d);
+  PS.day = 1;
+  const steps = [...new Set([15, 30, 60, PS.d.step])].sort((x, y) => x - y);
+  pgOpen(`<div class="pn pg">
+    ${pgHead('Графік роботи')}
+    <div class="pg-b">
+      <p class="mut pg-sub">Оберіть день і налаштуйте години роботи</p>
+      <div id="psd">${psDay()}</div>
+      <div class="fh">${ic('cal')} Крок записів</div>
+      <select data-p="step">${steps.map(x => `<option value="${x}" ${x == PS.d.step ? 'selected' : ''}>${x} хв</option>`).join('')}</select>
+      <small class="mut" style="display:block;margin-top:6px">Інтервал між слотами для запису</small>
+    </div>
+    <div class="pg-f"><button type="button" class="bt" id="pgsv" data-a="sws" disabled>${ic('check')} Зберегти</button></div>
+  </div>`, stBack, () => JSON.stringify(PS.d) !== PS.o);
+}
+
+/* Послуги: список */
+function svRows(q) {
+  q = (q || '').trim().toLowerCase();
+  const cats = [...new Set([...CATS, ...db.services.map(s => s.cat)])];
+  const html = cats.map(c => {
+    const l = db.services.filter(s => s.cat == c && (!q || s.title.toLowerCase().includes(q)));
+    return l.length
+      ? `<div class="sgh2">${esc(c)}</div>` + l.map(s => `
+          <div class="scd ${cls(c)}" data-a="ss" data-v="${s.id}">
+            <b>${esc(s.title)}</b><small>${money(s.price)} · ${dm(s.dur)}</small>
+          </div>`).join('')
+      : '';
+  }).join('');
+  return html || `<p class="mut" style="text-align:center;margin-top:28px">${q ? 'Нічого не знайдено' : 'Послуг ще немає. Натисніть «+», щоб додати.'}</p>`;
+}
+
+function svcPg() {
+  pgOpen(`<div class="pn pg">
+    ${pgHead('Послуги', `<button type="button" class="ib" data-a="ss" data-v="" aria-label="Додати послугу">${ic('plus')}</button>`)}
+    <div class="pg-b">
+      <div class="sr" style="margin:10px 0 6px">${ic('search')}<input id="svq" autocomplete="off" placeholder="Пошук"></div>
+      <div id="svl">${svRows('')}</div>
+    </div>
+  </div>`, stBack);
+}
+
+/* Послуга: редагування */
 function ss(id) {
   const s = id ? sv(id) : { cat: 'Подологія', title: '', desc: '', price: '', dur: 60 };
-  sheet(`
-    ${shHead('Послуга', id ? 'ds' : '', id)}
-    <label>Категорія</label>
-    <select id="sc">
-      ${CATS.map(c => `<option ${c == s.cat ? 'selected' : ''}>${c}</option>`).join('')}
-    </select>
-    <label>Назва</label>
-    <input id="st" value="${esc(s.title)}" placeholder="Назва послуги">
-    <label>Опис</label>
-    <textarea id="sd">${esc(s.desc)}</textarea>
-    <div class="row">
-      <div><label>Ціна, ₴</label><input id="sp" type="number" min="0" value="${s.price}"></div>
-      <div><label>Тривалість, хв</label><input id="su" type="number" min="5" step="5" value="${s.dur}"></div>
+  const cats = [...new Set([...CATS, s.cat])];
+  pgOpen(`<div class="pn pg">
+    ${pgHead(id ? 'Послуга' : 'Нова послуга', id ? `<button type="button" class="ib dl" data-a="ds" data-v="${id}" aria-label="Видалити" title="Видалити">${ic('trash')}</button>` : '')}
+    <div class="pg-b">
+      <div class="fh first">${ic('list')} Категорія</div>
+      <select id="sc">${cats.map(c => `<option ${c == s.cat ? 'selected' : ''}>${esc(c)}</option>`).join('')}</select>
+
+      <div class="fh">${ic('file')} Послуга</div>
+      <input id="st" value="${esc(s.title)}" placeholder="Назва послуги">
+
+      <div class="fh">${ic('msg')} Опис</div>
+      <textarea id="sd" placeholder="Введіть опис">${esc(s.desc)}</textarea>
+
+      <div class="fh">${ic('cash')} Вартість</div>
+      <div class="fld"><input id="sp" type="number" inputmode="decimal" min="0" value="${s.price}"><em class="sf">₴</em></div>
+
+      <div class="fh">${ic('clock')} Тривалість послуги</div>
+      <div class="fld"><input id="su" type="number" inputmode="numeric" min="5" step="5" value="${s.dur}"><em class="sf">хв</em></div>
     </div>
-    <div class="row" style="margin-top:18px">
-      ${closeBtn()}
-      <button class="bt" data-a="sv" data-v="${id || ''}">${ic('check')} Зберегти</button>
+    <div class="pg-f"><button type="button" class="bt" data-a="sv" data-v="${id || ''}">${ic('check')} Зберегти</button></div>
+  </div>`, svcPg);
+}
+
+/* Резервна копія */
+function bkpPg() {
+  pgOpen(`<div class="pn pg">
+    ${pgHead('Резервна копія')}
+    <div class="pg-b">
+      <p class="mut pg-sub">Зберігайте копію даних у файл і відновлюйте її за потреби. Робіть копію час від часу.</p>
+      <button type="button" class="bt gh" data-a="ex">${ic('download')} Експорт копії</button>
+      <button type="button" class="bt gh" data-a="im" style="margin-top:10px">${ic('upload')} Імпорт копії</button>
+      <p class="mut pg-sub" style="margin-top:14px">Імпорт замінює всі поточні дані даними з файлу.</p>
     </div>
-  `);
+  </div>`, stBack);
 }
 
 /* ── ACTIONS ────────────────────────────────────────────────── */
@@ -746,7 +891,33 @@ const A = {
 
   close: () => {
     if (dirty() && !confirm('Закрити без збереження?\nВнесені дані буде втрачено.')) return;
-    $('#sh').className = '';
+    if (S.bk) { const b = S.bk; S.bk = null; b(); } else $('#sh').className = '';
+  },
+
+  // налаштування
+  gsch: () => schPg(),
+  gsvc: () => svcPg(),
+  gbkp: () => bkpPg(),
+  gday: v => { PS.day = +v; $('#psd').innerHTML = psDay(); },
+  gcp: () => {
+    const c = PS.d.days[PS.day];
+    DN.forEach((_, i) => { PS.d.days[i + 1].s = c.s; PS.d.days[i + 1].e = c.e; });
+    psUpd();
+    toast('Години застосовано до всіх днів');
+  },
+  sws: () => {
+    const bad = DN.findIndex((_, i) => PS.d.days[i + 1].on && tm(PS.d.days[i + 1].e) <= tm(PS.d.days[i + 1].s));
+    if (bad >= 0) {
+      PS.day = bad + 1;
+      $('#psd').innerHTML = psDay();
+      toast('Кінець має бути пізніше за початок (' + DN[bad] + ')', 'warn');
+      return;
+    }
+    db.sched.step = PS.d.step;
+    db.sched.days = PS.d.days;
+    save();
+    toast('Графік збережено');
+    stBack();
   },
 
   tab: v => { S.tab = v; render(); },
@@ -789,8 +960,19 @@ const A = {
   },
 
   // послуги: додати / кількість / прибрати
-  tsp: () => $('#xpk').classList.toggle('open'),
-  asv: v => { cur.svc.push(v); $('#xpk').classList.remove('open'); svChanged(); },
+  tsp: () => pkOpen(),
+  pkx: () => pkClose(),
+  tgs: (v, t) => {
+    if (pkSel.has(v)) pkSel.delete(v); else pkSel.add(v);
+    t.classList.toggle('on', pkSel.has(v));
+    pkFoot();
+  },
+  apk: () => {
+    if (!pkSel.size) return;
+    pkSel.forEach(id => cur.svc.push(id));
+    pkClose();
+    svChanged();
+  },
   qty: v => {
     const [id, d] = v.split('|');
     if (d == '1') cur.svc.push(id);
@@ -890,14 +1072,14 @@ const A = {
     else db.services.push({ id: uid(), ...o });
     save();
     toast('\u041f\u043e\u0441\u043b\u0443\u0433\u0443 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e');
-    done();
+    svcPg();
   },
 
   ds: v => {
     if (confirm('\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u043f\u043e\u0441\u043b\u0443\u0433\u0443?')) {
       db.services = db.services.filter(s => s.id != v);
       save();
-      done();
+      svcPg();
     }
   },
 };
@@ -914,12 +1096,14 @@ document.addEventListener('focusin', e => {
 
 document.addEventListener('input', e => {
   if (e.target.id == 'xq') { cur.cid = ''; $('#xcw').classList.remove('ok'); cql(); return; }
+  if (e.target.id == 'svq') { $('#svl').innerHTML = svRows(e.target.value); return; }
   if (e.target.id == 'iq') { $('#il').innerHTML = impRows(e.target.value.toLowerCase()); return; }
   if (e.target.dataset.c == 'q') { S.q = e.target.value; $('#cl').innerHTML = cl(); }
 });
 
 document.addEventListener('change', async e => {
   const t = e.target, c = t.dataset.c;
+  if (t.dataset.p) { psChange(t); return; }
   if (['xdt', 'xs', 'xe', 'xt'].includes(t.id)) { apChange(t.id); return; }
   if (t.id == 'fv') {
     const f = t.files[0];
@@ -941,6 +1125,7 @@ document.addEventListener('change', async e => {
         if (!o.services) throw 0;
         db = o;
         save();
+        $('#sh').className = '';
         render();
         toast('\u0414\u0430\u043d\u0456 \u0456\u043c\u043f\u043e\u0440\u0442\u043e\u0432\u0430\u043d\u043e');
       } catch (x) {
@@ -951,10 +1136,6 @@ document.addEventListener('change', async e => {
     return;
   }
   if (t.id == 'ff') { for (const f of t.files) cur.photos.push(await rz(f)); phs(); return; }
-  if (c == 'step') db.sched.step = +t.value;
-  else if (c && t.dataset.d) db.sched.days[t.dataset.d][c] = c == 'on' ? (t.checked ? 1 : 0) : t.value;
-  else return;
-  save();
 });
 
 /* ── IMPORT CONTACTS ────────────────────────────────────────── */
@@ -1049,6 +1230,7 @@ function csv(t) {
 document.addEventListener('keydown', e => {
   const t = e.target;
   if (e.key == 'Enter' && t.getAttribute && t.getAttribute('role') == 'button') t.click();
+  if (e.key == 'Escape' && $('#pkm') && $('#pkm').classList.contains('on')) { pkClose(); return; }
   if (e.key == 'Escape' && $('#sh').classList.contains('on')) { $('#sh').className = ''; }
 });
 
