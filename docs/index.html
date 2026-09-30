@@ -19,7 +19,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=13">
 </head>
 <body>
 
@@ -91,7 +91,24 @@
   <input type="file" id="fi" accept=".json,application/json" hidden>
   <input type="file" id="ff" accept="image/*" multiple hidden>
 
+  <script>
+  // iOS PWA: реальна висота екрана для фіксованої розкладки (меню завжди внизу)
+  (function(){
+    var st = window.navigator.standalone || matchMedia('(display-mode: standalone)').matches;
+    if(!st) return;
+    function set(){
+      var p = matchMedia('(orientation: portrait)').matches;
+      var a = Math.max(screen.width, screen.height), b = Math.min(screen.width, screen.height);
+      var h = Math.max(window.innerHeight, p ? a : b);
+      document.documentElement.style.setProperty('--app-h', h + 'px');
+    }
+    set();
+    addEventListener('resize', set);
+    addEventListener('orientationchange', function(){ setTimeout(set, 250); });
+    addEventListener('pageshow', set);
+  })();
+  </script>
   <script src="config.js"></script>
-  <script src="js/cloud.js?v=8"></script>
+  <script src="js/cloud.js?v=13"></script>
 </body>
 </html>

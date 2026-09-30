@@ -64,6 +64,7 @@ const S = {
   m:   new Date(now.getFullYear(), now.getMonth(), 1),
   sm:  new Date(now.getFullYear(), now.getMonth(), 1),
   q:   '',
+  mx:  {},
 };
 let cur;
 
@@ -95,9 +96,19 @@ const P = {
   download:'<path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 20h14"/>',
   upload:  '<path d="M12 16V5M7.5 9.5L12 5l4.5 4.5M5 20h14"/>',
   logout:  '<path d="M9 4.5H6.5a2 2 0 00-2 2v11a2 2 0 002 2H9M14 8l4 4-4 4M18 12H9.5"/>',
+  down:    '<path d="M6 9.5l6 6 6-6"/>',
+  moon:    '<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/>',
+  work:    '<rect x="3.5" y="7.5" width="17" height="12" rx="3"/><path d="M9 7.5V6a2 2 0 012-2h2a2 2 0 012 2v1.5M3.5 12.5h17"/>',
+  x:       '<path d="M6 6l12 12M18 6L6 18"/>',
   checks:  '<path d="M3.5 12.5L8 17l6-10M13 15l1.5 1.5L21 8"/>',
 };
 const ic = n => `<svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${P[n]}</svg>`;
+
+/* Заголовок шторки: назва + мала кругла кнопка видалення справа */
+const shHead = (title, act, v) => `<div class="sh-h"><h3>${title}</h3>${
+  act ? `<button class="ib dl" data-a="${act}" ${v !== undefined ? `data-v="${v}"` : ''} aria-label="Видалити" title="Видалити">${ic('trash')}</button>` : ''
+}</div>`;
+const closeBtn = () => `<button class="bt gh" data-a="close">${ic('x')} Закрити</button>`;
 
 /* ── TABS ───────────────────────────────────────────────────── */
 const TABS = [
@@ -130,6 +141,20 @@ function render() {
 }
 
 /* ── SCHEDULE TAB ───────────────────────────────────────────── */
+// Графік дня: разове перевизначення (sched.over) має пріоритет над шаблоном тижня
+const wdOf = id => (new Date(id + 'T00:00').getDay() + 6) % 7 + 1;
+const dcfg = id => (db.sched.over || {})[id] || db.sched.days[wdOf(id)];
+
+function setDay(on) {
+  const base = db.sched.days[wdOf(S.d)];
+  db.sched.over = db.sched.over || {};
+  if (!!base.on === !!on) delete db.sched.over[S.d];
+  else db.sched.over[S.d] = { on: on ? 1 : 0, s: base.s, e: base.e };
+  save();
+  toast(on ? 'День став робочим' : 'День став вихідним');
+  render();
+}
+
 function sch() {
   const m = S.m, y = m.getFullYear(), mo = m.getMonth();
   const n = new Date(y, mo + 1, 0).getDate();
@@ -139,16 +164,23 @@ function sch() {
   for (let i = 1; i <= n; i++) {
     const id = iso(new Date(y, mo, i));
     const c = db.appts.some(a => a.date == id && a.status != 'canc');
-    cells += `<b class="dy ${id == S.d ? 'sel' : ''} ${id == today ? 'today' : ''}"
+    const off = !dcfg(id).on;
+    cells += `<b class="dy ${id == S.d ? 'sel' : ''} ${id == today ? 'today' : ''} ${off ? 'off' : ''}"
                  data-a="day" data-v="${id}">${i}${c ? '<u></u>' : ''}</b>`;
   }
   const dt  = new Date(S.d + 'T00:00');
-  const cfg = db.sched.days[(dt.getDay() + 6) % 7 + 1];
+  const cfg = dcfg(S.d);
   const step = db.sched.step;
   const list = db.appts.filter(a => a.date == S.d).sort((a, b) => tm(a.start) - tm(b.start));
   let sl = '';
   if (!cfg.on) {
-    sl = '<p class="mut">Вихідний день. Змінити можна в Налаштуваннях.</p>';
+    sl = `<div class="off-card">
+            <div class="oh">
+              <span class="ico">${ic('moon')}</span>
+              <span class="t"><b>Вихідний</b><small>Записи на цей день закриті</small></span>
+            </div>
+            <button class="bt" data-a="dw">${ic('work')} Зробити робочим</button>
+          </div>` + list.filter(a => a.status != 'canc').map(a => apCard(a, sv(a.svc[0]))).join('');
   } else {
     for (let t = tm(cfg.s); t < tm(cfg.e); t += step) {
       const ap = list.filter(a => a.status != 'canc').find(a => tm(a.start) < t + step && tm(a.start) + a.dur > t);
@@ -172,9 +204,7 @@ function sch() {
   <div class="cd"><div class="cal">${cells}</div></div>
   <h3>${dayLabel}</h3>
   ${sl}
-  <button class="bt" style="width:100%;margin-top:6px" data-a="new" data-v="${ft(tm(cfg.s))}">
-    ${ic('plus')} Швидкий запис
-  </button>`;
+  ${cfg.on ? `<button class="bt gh" style="margin-top:6px" data-a="dof">${ic('moon')} Зробити вихідним</button>` : ''}`;
 }
 
 function apCard(a, s0) {
@@ -192,7 +222,7 @@ function apSheet(id, t0) {
     : { id: '', date: S.d, start: t0, dur: db.sched.step, price: 0, svc: [], status: 'plan', cid: '', comment: '', photos: [] };
   cur = JSON.parse(JSON.stringify(a));
   sheet(`
-    <h3>${id ? 'Запис' : 'Новий запис'} · ${fdt(cur.date)}</h3>
+    ${shHead((id ? 'Запис' : 'Новий запис') + ' · ' + fdt(cur.date), id ? 'da' : '')}
     <label>Клієнт</label>
     <div class="row">
       <select id="xc">
@@ -217,7 +247,7 @@ function apSheet(id, t0) {
     <label>Коментар</label>
     <textarea id="xm">${esc(cur.comment)}</textarea>
     <div class="row" style="margin-top:18px">
-      ${id ? `<button class="bt gh" data-a="da">${ic('trash')} Видалити</button>` : ''}
+      ${closeBtn()}
       <button class="bt" data-a="sa">${ic('check')} Зберегти</button>
     </div>
   `);
@@ -272,26 +302,18 @@ function cs(id) {
     : { name: '', phone: '', ig: '', note: '' };
   const h = db.appts.filter(a => a.cid == id).sort((a, b) => b.date.localeCompare(a.date));
   const spent = h.filter(a => a.status == 'done').reduce((s, a) => s + a.price, 0);
-  const ig = (c.ig || '').replace(/^@/, '');
   sheet(`
-    <h3>${id ? esc(c.name) : 'Новий клієнт'}</h3>
+    ${shHead(id ? '' : 'Новий клієнт', id ? 'dc' : '', id)}
     <label>Ім\u2019я*</label>
     <input id="cn" value="${esc(c.name)}" placeholder="Ім\u2019я клієнта">
     <label>Телефон</label>
     <input id="cp" type="tel" placeholder="+380…" value="${esc(c.phone)}">
     <div id="mo" style="${id ? '' : 'display:none'}">
-      <label>Instagram / Telegram</label>
-      <input id="ci" value="${esc(c.ig)}">
       <label>Примітки (алергії, особливості)</label>
       <textarea id="cm">${esc(c.note)}</textarea>
     </div>
     ${id ? '' : '<p class="mut" data-a="mo" style="color:var(--ac2);cursor:pointer">Детальне додавання ▾</p>'}
     ${id ? `
-      <div class="row" style="margin-top:12px">
-        ${c.phone ? `<a class="bt gh" style="text-decoration:none" href="tel:${esc(c.phone)}">${ic('phone')} Подзвонити</a>` : ''}
-        ${ig ? `<a class="bt gh" style="text-decoration:none" target="_blank"
-                   href="${ig.startsWith('http') ? esc(ig) : 'https://instagram.com/' + esc(ig)}">${ic('link')} Соцмережа</a>` : ''}
-      </div>
       <div class="cd" style="margin-top:12px">
         <b>Витрачено: ${money(spent)}</b><br>
         <small class="mut">Історія візитів (${h.length})</small>
@@ -301,62 +323,102 @@ function cs(id) {
         </div>`).join('')}
       </div>` : ''}
     <div class="row" style="margin-top:16px">
-      ${id ? `<button class="bt gh" data-a="dc" data-v="${id}">${ic('trash')} Видалити</button>` : ''}
+      ${closeBtn()}
       <button class="bt" data-a="sc" data-v="${id || ''}">${ic('check')} Зберегти</button>
     </div>
   `);
 }
 
 /* ── STATISTICS TAB ─────────────────────────────────────────── */
-function st() {
-  const y = S.sm.getFullYear(), mo = S.sm.getMonth();
-  const k = y + '-' + String(mo + 1).padStart(2, '0');
-  const done = db.appts.filter(a => a.status == 'done' && a.date.startsWith(k));
-  const ex   = db.expenses.filter(e => e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date));
-  const inc  = done.reduce((s, a) => s + a.price, 0);
-  const out  = ex.reduce((s, e) => s + e.amount, 0);
-  const cs   = { Подологія: 0, Шугаринг: 0 };
+const mkey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+
+function sum(done, ex) {
+  const inc = done.reduce((s, a) => s + a.price, 0);
+  const out = ex.reduce((s, e) => s + e.amount, 0);
+  const cat = { Подологія: 0, Шугаринг: 0 };
   done.forEach(a => {
     const ss = a.svc.map(sv).filter(Boolean);
-    const t  = ss.reduce((x, s) => x + s.price, 0);
-    ss.forEach(s => cs[s.cat] += t ? a.price * s.price / t : 0);
+    const t = ss.reduce((x, s) => x + s.price, 0);
+    ss.forEach(s => { cat[s.cat] = (cat[s.cat] || 0) + (t ? a.price * s.price / t : 0); });
   });
-  const mx = Math.max(1, cs.Подологія + cs.Шугаринг);
+  return { done, ex, inc, out, net: inc - out, cat, cl: new Set(done.map(a => a.cid)).size };
+}
+
+const mstat = k => sum(
+  db.appts.filter(a => a.status == 'done' && a.date.startsWith(k)),
+  db.expenses.filter(e => e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date))
+);
+
+const catBars = cat => {
+  const mx = Math.max(1, cat.Подологія + cat.Шугаринг);
+  return CATS.map(c => `
+    <div class="cr"><span>${c}</span><span>${money(cat[c])}</span></div>
+    <div class="bar"><i style="width:${cat[c] / mx * 100}%;background:var(${c == 'Подологія' ? '--mi2' : '--pe2'})"></i></div>`).join('');
+};
+
+function st() {
+  const all = sum(db.appts.filter(a => a.status == 'done'), db.expenses);
+  const cur = mkey(new Date());
+  const pd = new Date(); pd.setDate(1); pd.setMonth(pd.getMonth() - 1);
+  const prev = mkey(pd);
+
+  // усі місяці, де є дані, + поточний; найновіші зверху
+  const keys = new Set([cur]);
+  db.appts.forEach(a => { if (a.status == 'done') keys.add(a.date.slice(0, 7)); });
+  db.expenses.forEach(e => keys.add(e.date.slice(0, 7)));
+  const list = [...keys].filter(k => /^\d{4}-\d{2}$/.test(k)).sort().reverse();
+
+  const item = k => {
+    const m = mstat(k), y = k.slice(0, 4), mo = +k.slice(5) - 1;
+    const open = k in S.mx ? S.mx[k] : k == prev;   // за замовчуванням розгорнутий лише попередній місяць
+    return `
+    <div class="mo ${open ? 'open' : ''}">
+      <div class="mo-h" role="button" tabindex="0" data-a="mt" data-v="${k}">
+        <span class="t">
+          <b>${MN[mo]} ${y}${k == cur ? '<em class="tag">Поточний</em>' : ''}</b>
+          <small>Дохід ${money(m.inc)} · Витрати ${money(m.out)}</small>
+        </span>
+        <span class="amt ${m.net < 0 ? 'neg' : ''}">${money(m.net)}</span>
+        ${ic('down')}
+      </div>
+      <div class="mo-b"><div><div class="in">
+        <div class="mk">
+          <div><small>Дохід</small><b>${money(m.inc)}</b></div>
+          <div><small>Витрати</small><b>${money(m.out)}</b></div>
+          <div><small>Клієнтів</small><b>${m.cl}</b></div>
+          <div><small>Записів</small><b>${m.done.length}</b></div>
+        </div>
+        ${catBars(m.cat)}
+        <div class="sec" style="margin:6px 0 2px">Витрати</div>
+        ${m.ex.map(e => `
+          <div class="li" data-a="es" data-v="${e.id}">
+            <span>${esc(e.cat)}<br><small class="mut">${fdt(e.date)} ${esc(e.desc)}</small></span>
+            <b>${money(e.amount)}</b>
+          </div>`).join('') || '<p class="mut" style="margin:6px 0 0">Витрат немає.</p>'}
+      </div></div></div>
+    </div>`;
+  };
+
   return `
-    <h1>${MN[mo]} ${y}
-      <span>
-        <button class="ib" data-a="ps" data-v="-1">${ic('prev')}</button>
-        <button class="ib" data-a="ps" data-v="1">${ic('next')}</button>
-      </span>
-    </h1>
-    <div class="cd" style="background:linear-gradient(150deg,var(--pe),rgba(244,114,182,.05));border-color:rgba(244,114,182,.32)">
-      <small class="mut">Чистий прибуток</small>
-      <b style="display:block;font-size:36px;letter-spacing:-.04em;margin-top:4px">${money(inc - out)}</b>
+    <h1>Статистика</h1>
+    <div class="sec">Загальна статистика</div>
+    <div class="cd hero">
+      <small class="mut">Чистий прибуток за весь час</small>
+      <b class="big ${all.net < 0 ? 'neg' : ''}">${money(all.net)}</b>
     </div>
     <div class="kp">
-      <div class="cd"><small class="mut">Дохід</small><b>${money(inc)}</b></div>
-      <div class="cd"><small class="mut">Витрати</small><b>${money(out)}</b></div>
-      <div class="cd"><small class="mut">Клієнтів</small><b>${new Set(done.map(a => a.cid)).size}</b></div>
-      <div class="cd"><small class="mut">Завершених записів</small><b>${done.length}</b></div>
+      <div class="cd"><small class="mut">Дохід</small><b>${money(all.inc)}</b></div>
+      <div class="cd"><small class="mut">Витрати</small><b>${money(all.out)}</b></div>
+      <div class="cd"><small class="mut">Клієнтів</small><b>${all.cl}</b></div>
+      <div class="cd"><small class="mut">Завершених записів</small><b>${all.done.length}</b></div>
     </div>
     <div class="cd" style="margin-top:10px">
       <b>Дохід за напрямками</b>
-      ${CATS.map(c => `
-        <div style="margin-top:10px;display:flex;justify-content:space-between;font-size:14px">
-          <span>${c}</span><span>${money(cs[c])}</span>
-        </div>
-        <div class="bar">
-          <i style="width:${cs[c] / mx * 100}%;background:var(${c == 'Подологія' ? '--mi2' : '--pe2'})"></i>
-        </div>`).join('')}
+      ${catBars(all.cat)}
     </div>
-    <h3 style="display:flex;justify-content:space-between;margin-top:18px">
-      Витрати <button class="ib" data-a="es" data-v="">${ic('plus')}</button>
-    </h3>
-    ${ex.map(e => `
-      <div class="cd li" data-a="es" data-v="${e.id}" style="margin-bottom:8px">
-        <span>${esc(e.cat)}<br><small class="mut">${fdt(e.date)} ${esc(e.desc)}</small></span>
-        <b>${money(e.amount)}</b>
-      </div>`).join('') || '<p class="mut">Витрат за місяць немає.</p>'}
+    <button class="bt" data-a="es" data-v="">${ic('plus')} Додати витрату</button>
+    <div class="sec" style="margin-top:26px">Історія по місяцях</div>
+    ${list.map(item).join('')}
   `;
 }
 
@@ -365,7 +427,7 @@ function es(id) {
     ? db.expenses.find(x => x.id == id)
     : { cat: 'Матеріали', amount: '', date: iso(new Date()), desc: '' };
   sheet(`
-    <h3>Витрата</h3>
+    ${shHead('Витрата', id ? 'de' : '', id)}
     <label>Категорія</label>
     <select id="ec">
       ${['Матеріали','Оренда','Інструменти','Реклама'].map(c => `<option ${c == e.cat ? 'selected' : ''}>${c}</option>`).join('')}
@@ -377,7 +439,7 @@ function es(id) {
     <label>Коментар</label>
     <input id="eo" value="${esc(e.desc)}">
     <div class="row" style="margin-top:18px">
-      ${id ? `<button class="bt gh" data-a="de" data-v="${id}">${ic('trash')} Видалити</button>` : ''}
+      ${closeBtn()}
       <button class="bt" data-a="se" data-v="${id || ''}">${ic('check')} Зберегти</button>
     </div>
   `);
@@ -427,7 +489,7 @@ function set() {
 function ss(id) {
   const s = id ? sv(id) : { cat: 'Подологія', title: '', desc: '', price: '', dur: 60 };
   sheet(`
-    <h3>Послуга</h3>
+    ${shHead('Послуга', id ? 'ds' : '', id)}
     <label>Категорія</label>
     <select id="sc">
       ${CATS.map(c => `<option ${c == s.cat ? 'selected' : ''}>${c}</option>`).join('')}
@@ -441,7 +503,7 @@ function ss(id) {
       <div><label>Тривалість, хв</label><input id="su" type="number" min="5" step="5" value="${s.dur}"></div>
     </div>
     <div class="row" style="margin-top:18px">
-      ${id ? `<button class="bt gh" data-a="ds" data-v="${id}">${ic('trash')} Видалити</button>` : ''}
+      ${closeBtn()}
       <button class="bt" data-a="sv" data-v="${id || ''}">${ic('check')} Зберегти</button>
     </div>
   `);
@@ -500,6 +562,9 @@ const A = {
   close: () => { $('#sh').className = ''; },
 
   tab: v => { S.tab = v; render(); },
+  dw:  () => setDay(1),
+  dof: () => setDay(0),
+  mt:  (v, t) => { const el = t.closest('.mo'); el.classList.toggle('open'); S.mx[v] = el.classList.contains('open'); },
   day: v => { S.d = v; render(); },
   pm:  v => { S.m  = new Date(S.m.getFullYear(),  S.m.getMonth()  + +v, 1); render(); },
   ps:  v => { S.sm = new Date(S.sm.getFullYear(), S.sm.getMonth() + +v, 1); render(); },
@@ -550,9 +615,9 @@ const A = {
   sc: v => {
     const nm = $('#cn').value.trim();
     if (!nm) { toast('\u0412\u043a\u0430\u0436\u0456\u0442\u044c \u0456\u043c\u2019\u044f', 'warn'); return; }
-    const o = { name: nm, phone: V('cp').trim(), ig: $('#ci') ? V('ci') : '', note: $('#cm') ? V('cm') : '' };
+    const o = { name: nm, phone: V('cp').trim(), note: $('#cm') ? V('cm') : '' };
     if (v) Object.assign(db.clients.find(c => c.id == v), o);
-    else db.clients.push({ id: uid(), ...o });
+    else db.clients.push({ id: uid(), ig: '', ...o });
     save();
     toast('\u041a\u043b\u0456\u0454\u043d\u0442\u0430 \u0437\u0431\u0435\u0440\u0435\u0436\u0435\u043d\u043e');
     done();

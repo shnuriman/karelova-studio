@@ -78,7 +78,7 @@ const LOGIN_CSS=`
   #kr-btn{
     width:100%;min-height:54px;padding:0 24px;border:0;border-radius:999px;
     background:linear-gradient(100deg,#9085ff 0%,#6f6efe 45%,#4ca9ff 100%);
-    color:#fff;font:600 16px/1 Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none;
+    color:#fff;font:500 15px/1 Inter,system-ui,sans-serif;letter-spacing:0;text-transform:none;
     display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;
     box-shadow:0 0 0 5px rgba(111,110,254,.16),0 10px 28px -8px rgba(111,110,254,.65),inset 0 1px 0 rgba(255,255,255,.28);
     transition:transform .2s cubic-bezier(.3,1.6,.5,1),box-shadow .2s;
@@ -105,7 +105,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const show=h=>{ov.innerHTML='<div id="kr-card">'+h+'</div>';ov.style.display='flex'};
 const hide=()=>{ov.style.display='none'};
 
-const btnHtml='width:100%;padding:14px;border:0;border-radius:14px;min-height:54px;background:linear-gradient(100deg,#9085ff,#6f6efe 45%,#4ca9ff);color:#fff;font:600 16px/1 Inter,sans-serif;cursor:pointer;box-shadow:0 0 0 5px rgba(111,110,254,.16),0 10px 28px -8px rgba(111,110,254,.65)';
+const btnHtml='width:100%;padding:14px;border:0;border-radius:14px;min-height:54px;background:linear-gradient(100deg,#9085ff,#6f6efe 45%,#4ca9ff);color:#fff;font:500 15px/1 Inter,sans-serif;cursor:pointer;box-shadow:0 0 0 5px rgba(111,110,254,.16),0 10px 28px -8px rgba(111,110,254,.65)';
 
 const msg=(t,retry)=>show(
   `<div id="kr-logo-wrap">${LOGO_SVG}</div>
@@ -249,7 +249,7 @@ window.addEventListener('online',()=>{if(dirty())push()});
     }
   }
   window.__DB=db;window.__SAVE=save;window.__LOGOUT=logout;
-  const s=document.createElement('script');s.src='js/app.js?v=8';document.body.appendChild(s);
+  const s=document.createElement('script');s.src='js/app.js?v=13';document.body.appendChild(s);
   if(dirty())push();
 })();
 })();
