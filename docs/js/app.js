@@ -117,6 +117,7 @@ const P = {
   logout:  '<path d="M9 4.5H6.5a2 2 0 00-2 2v11a2 2 0 002 2H9M14 8l4 4-4 4M18 12H9.5"/>',
   down:    '<path d="M6 9.5l6 6 6-6"/>',
   moon:    '<path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/>',
+  sun:     '<circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"/>',
   work:    '<rect x="3.5" y="7.5" width="17" height="12" rx="3"/><path d="M9 7.5V6a2 2 0 012-2h2a2 2 0 012 2v1.5M3.5 12.5h17"/>',
   x:       '<path d="M6 6l12 12M18 6L6 18"/>',
   checks:  '<path d="M3.5 12.5L8 17l6-10M13 15l1.5 1.5L21 8"/>',
@@ -690,11 +691,36 @@ const stRow = (ico, tone, title, sub, badge, act, noChv) => `
     ${noChv ? '' : `<span class="chv">${ic('next')}</span>`}
   </div>`;
 
+function applyTheme(light, showMsg = true) {
+  const root = document.documentElement;
+  if (light) {
+    root.setAttribute('data-theme', 'light');
+    try { localStorage.setItem('karelova_theme', 'light'); } catch (e) {}
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#f4f6fb');
+    document.querySelector('meta[name="color-scheme"]')?.setAttribute('content', 'light');
+  } else {
+    root.removeAttribute('data-theme');
+    try { localStorage.setItem('karelova_theme', 'dark'); } catch (e) {}
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', '#060a14');
+    document.querySelector('meta[name="color-scheme"]')?.setAttribute('content', 'dark');
+  }
+  if (showMsg) toast(light ? 'Світлу тему увімкнено' : 'Темну тему увімкнено');
+  if (S.tab == 'set') render();
+}
+
 function set() {
   const n = db.services.length;
   const anyDay = DN.some((_, i) => db.sched.days[i + 1].on);
+  const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   return `
     <h1>Налаштування</h1>
+    <div class="stl">
+      <div class="sti" role="button" tabindex="0" data-a="tgth" aria-label="Світла тема">
+        <span class="ico ${isLight ? 't-sun' : 't-moon'}">${ic(isLight ? 'sun' : 'moon')}</span>
+        <span class="t"><b>Світла тема</b><small>${isLight ? 'Увімкнено' : 'Вимкнено'}</small></span>
+        <span class="sw-pill ${isLight ? 'on' : ''}"><i></i></span>
+      </div>
+    </div>
     <div class="stl">
       ${stRow('cal', 't1', 'Графік роботи', schSum(), anyDay ? 'ok' : 'warn', 'gsch')}
       ${stRow('list', 't2', 'Послуги', n ? n + ' ' + plu(n, 'послуга', 'послуги', 'послуг') : 'Ще не додано', n ? 'ok' : 'warn', 'gsvc')}
@@ -900,6 +926,7 @@ const A = {
   },
 
   // налаштування
+  tgth: () => applyTheme(document.documentElement.getAttribute('data-theme') !== 'light'),
   gsch: () => schPg(),
   gsvc: () => svcPg(),
   gbkp: () => bkpPg(),
@@ -1258,6 +1285,7 @@ setInterval(autoTick, 60000);
 document.addEventListener('visibilitychange', () => { if (document.visibilityState == 'visible') autoTick(); });
 
 /* ── INIT ───────────────────────────────────────────────────── */
+try { if (localStorage.getItem('karelova_theme') === 'light') applyTheme(true, false); } catch (e) {}
 autoDone();
 render();
 

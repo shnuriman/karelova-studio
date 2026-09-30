@@ -1308,3 +1308,359 @@ input:-webkit-autofill, input:-webkit-autofill:focus, textarea:-webkit-autofill 
 .wr span em { display: inline; flex: none; margin-left: 6px; font-size: 12px; text-align: left; }
 .wr b { min-width: 0; font-size: 13.5px; }
 .sh2 { margin-top: 14px; padding-top: 12px; }
+
+/* ── ПЕРЕМИКАЧ ТЕМИ В НАЛАШТУВАННЯХ ─────────────────────────── */
+.sti .sw-pill {
+  position: relative;
+  display: inline-block;
+  width: 50px;
+  height: 30px;
+  margin: 0;
+  flex: none;
+  border-radius: 999px;
+  background: rgba(120,130,160,.28);
+  transition: background .22s cubic-bezier(.2,.8,.2,1);
+}
+.sti .sw-pill i {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.22);
+  transition: transform .22s cubic-bezier(.2,.8,.2,1);
+}
+.sti .sw-pill.on {
+  background: #2fbf71;
+}
+.sti .sw-pill.on i {
+  transform: translateX(20px);
+}
+.sti .ico.t-sun {
+  background: rgba(245,158,11,.16);
+  color: #d97706;
+}
+.sti .ico.t-moon {
+  background: rgba(144,133,255,.16);
+  color: #a7a0ff;
+}
+
+/* Плавні переходи при перемиканні теми */
+body, #v, .cd, .ap, .stl, .sti, .nav, .pn, input, select, textarea, .ib, .bt.gh, .slot, .mo, .off-card, .sgl {
+  transition: background-color .22s ease, border-color .22s ease, color .22s ease, box-shadow .22s ease;
+}
+
+/* ================================================================
+   СВІТЛА ТЕМА (LIGHT THEME 2026)
+   ================================================================ */
+[data-theme="light"] {
+  color-scheme: light;
+  --bg: #f4f6fb;
+  --panel: #ffffff;
+  --line: rgba(70,90,140,.12);
+  --accent: #5d5cfa;
+  --accent-2: #2563eb;
+  --ac2: #5d5cfa;
+  --mi2: #2563eb;
+  --mi: rgba(37,99,235,.09);
+  --pe2: #e06020;
+  --pe: rgba(224,96,32,.09);
+  --tx: #121826;
+  --mu: #64748b;
+  --grad: linear-gradient(100deg, #7c70ff 0%, #5d5cfa 45%, #3b9bff 100%);
+  --cd: linear-gradient(160deg, rgba(255,255,255,.95), rgba(246,249,255,.88));
+  --bo: rgba(80,105,160,.14);
+  --ring: rgba(93,92,250,.14);
+  --glow: 0 8px 24px -8px rgba(93,92,250,.45);
+  --sh: 0 8px 30px -10px rgba(45,60,105,.08);
+  --hl: inset 0 1px 0 rgba(255,255,255,1);
+  --inc: #059669;
+  --exp: #e11d48;
+}
+
+/* Фон */
+[data-theme="light"] .bg {
+  background:
+    linear-gradient(to top, var(--bg) 0, rgba(244,246,251,0) 160px),
+    radial-gradient(ellipse 620px 460px at 105% -8%, rgba(124,112,255,.12), transparent 70%),
+    radial-gradient(ellipse 520px 520px at -12% 60%, rgba(59,155,255,.09), transparent 70%),
+    var(--bg);
+}
+[data-theme="light"] .bg::after {
+  opacity: .015;
+}
+
+/* Нижнє меню */
+[data-theme="light"] .nav {
+  background: rgba(255,255,255,.88);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-color: rgba(90,110,165,.18);
+  box-shadow: 0 0 0 5px rgba(93,92,250,.04), 0 10px 30px -10px rgba(45,60,105,.16);
+}
+[data-theme="light"] .nav div {
+  color: #69768f;
+}
+[data-theme="light"] .nav .on {
+  color: #ffffff;
+}
+
+/* Кнопки */
+[data-theme="light"] .bt.gh {
+  background: rgba(255,255,255,.85);
+  border-color: rgba(90,110,165,.20);
+  box-shadow: 0 2px 8px rgba(45,60,105,.05), inset 0 1px 0 #fff;
+  color: var(--tx);
+}
+[data-theme="light"] .bt.gh:hover {
+  border-color: rgba(93,92,250,.45);
+  background: #ffffff;
+}
+[data-theme="light"] .bt.gh .i {
+  color: var(--accent);
+}
+[data-theme="light"] .ib {
+  background: rgba(255,255,255,.85);
+  border-color: rgba(90,110,165,.18);
+  color: #5d5cfa;
+  box-shadow: 0 2px 6px rgba(45,60,105,.04);
+}
+[data-theme="light"] .ib:hover {
+  background: rgba(93,92,250,.10);
+  border-color: rgba(93,92,250,.40);
+}
+[data-theme="light"] .ib.dl {
+  color: #e11d48;
+  background: rgba(225,29,72,.07);
+  border-color: rgba(225,29,72,.20);
+}
+[data-theme="light"] .ib.dl:hover {
+  background: rgba(225,29,72,.14);
+  border-color: rgba(225,29,72,.40);
+}
+
+/* Поля вводу */
+[data-theme="light"] input:not([type=checkbox]),
+[data-theme="light"] select,
+[data-theme="light"] textarea {
+  background: rgba(255,255,255,.94);
+  border-color: rgba(90,110,165,.20);
+  color: var(--tx);
+  -webkit-text-fill-color: var(--tx);
+  box-shadow: 0 1px 3px rgba(45,60,105,.04);
+}
+[data-theme="light"] input:not([type=checkbox]):focus,
+[data-theme="light"] select:focus,
+[data-theme="light"] textarea:focus {
+  border-color: #5d5cfa;
+  background: #ffffff;
+  box-shadow: 0 0 0 4px rgba(93,92,250,.14);
+}
+[data-theme="light"] select option {
+  background: #ffffff;
+  color: #121826;
+}
+[data-theme="light"] input[type=time],
+[data-theme="light"] input[type=date] {
+  color-scheme: light;
+}
+[data-theme="light"] input[type=time]::-webkit-calendar-picker-indicator,
+[data-theme="light"] input[type=date]::-webkit-calendar-picker-indicator {
+  filter: none;
+}
+[data-theme="light"] input:-webkit-autofill,
+[data-theme="light"] input:-webkit-autofill:focus,
+[data-theme="light"] textarea:-webkit-autofill {
+  box-shadow: 0 0 0 1000px #ffffff inset;
+  -webkit-text-fill-color: var(--tx);
+}
+
+/* Шторки та модальні вікна */
+[data-theme="light"] .pn {
+  background-color: #ffffff;
+  border-color: rgba(90,110,165,.16);
+  box-shadow: 0 -12px 48px -8px rgba(45,60,105,.14);
+}
+[data-theme="light"] .pn.pg {
+  background: var(--bg);
+}
+[data-theme="light"] .pg-h,
+[data-theme="light"] .pg-f {
+  background: rgba(244,246,251,.95);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border-color: var(--line);
+}
+[data-theme="light"] .hd {
+  background: rgba(93,92,250,.25);
+}
+[data-theme="light"] .bd,
+[data-theme="light"] .pk-bd {
+  background: rgba(20,28,48,.35);
+}
+[data-theme="light"] .pk-pn {
+  background: #ffffff;
+  border-color: rgba(90,110,165,.16);
+  box-shadow: 0 -16px 48px -10px rgba(45,60,105,.16);
+}
+
+/* Календар і слоти */
+[data-theme="light"] .dy:hover {
+  background: rgba(93,92,250,.09);
+}
+[data-theme="light"] .dy.today {
+  color: #5d5cfa;
+}
+[data-theme="light"] .slot {
+  background: rgba(255,255,255,.75);
+  border-color: rgba(90,110,165,.22);
+}
+[data-theme="light"] .slot:hover {
+  border-color: rgba(93,92,250,.45);
+  background: rgba(255,255,255,.95);
+}
+[data-theme="light"] .off-card {
+  background: linear-gradient(160deg, rgba(255,255,255,.94), rgba(242,246,255,.80));
+  border-color: rgba(90,110,165,.16);
+}
+[data-theme="light"] .off-card .ico {
+  background: rgba(93,92,250,.10);
+  color: #5d5cfa;
+}
+
+/* Картки записів та категорій */
+[data-theme="light"] .ap {
+  background: #ffffff;
+  border-color: rgba(90,110,165,.14);
+  box-shadow: 0 4px 18px -6px rgba(45,60,105,.06);
+}
+[data-theme="light"] .ap.mi {
+  background: linear-gradient(150deg, rgba(37,99,235,.07), #ffffff 60%);
+  border-color: rgba(37,99,235,.22);
+}
+[data-theme="light"] .ap.pe {
+  background: linear-gradient(150deg, rgba(224,96,32,.08), #ffffff 60%);
+  border-color: rgba(224,96,32,.22);
+}
+
+/* Статистика та історія */
+[data-theme="light"] .cd.hero {
+  background: linear-gradient(150deg, rgba(93,92,250,.10), rgba(59,155,255,.05));
+  border-color: rgba(93,92,250,.22);
+}
+[data-theme="light"] .mo {
+  background: #ffffff;
+  border-color: rgba(90,110,165,.14);
+  box-shadow: 0 4px 18px -6px rgba(45,60,105,.05);
+}
+[data-theme="light"] .mo.open .mo-h .i {
+  color: #5d5cfa;
+}
+[data-theme="light"] .tag {
+  background: rgba(93,92,250,.10);
+  color: #5d5cfa;
+}
+[data-theme="light"] .mk {
+  background: rgba(240,244,252,.75);
+  border-color: rgba(90,110,165,.14);
+}
+[data-theme="light"] .sgl {
+  background: #ffffff;
+  border-color: rgba(90,110,165,.18);
+  box-shadow: 0 12px 36px -8px rgba(45,60,105,.16);
+}
+[data-theme="light"] .sg:active {
+  background: rgba(93,92,250,.07);
+}
+[data-theme="light"] .rc {
+  background: rgba(90,110,165,.08);
+}
+[data-theme="light"] .rc.on {
+  border-color: #5d5cfa;
+  background: rgba(93,92,250,.14);
+  color: #5d5cfa;
+}
+[data-theme="light"] .sv-c {
+  background: rgba(246,249,255,.85);
+  border-color: rgba(90,110,165,.16);
+}
+[data-theme="light"] .qt button {
+  background: rgba(90,110,165,.10);
+}
+[data-theme="light"] .dch button {
+  background: rgba(242,246,252,.85);
+  border-color: rgba(90,110,165,.16);
+}
+[data-theme="light"] .dch button.on {
+  border-color: #5d5cfa;
+  background: rgba(93,92,250,.14);
+  color: #5d5cfa;
+}
+[data-theme="light"] .scd {
+  background: #ffffff;
+  border-color: rgba(90,110,165,.16);
+}
+[data-theme="light"] .scd:active {
+  background: rgba(93,92,250,.06);
+}
+[data-theme="light"] .pn .swr {
+  background: rgba(242,246,252,.85);
+  border-color: rgba(90,110,165,.16);
+}
+[data-theme="light"] .sw i {
+  background: rgba(90,110,165,.22);
+}
+
+/* Налаштування */
+[data-theme="light"] .stl {
+  background: #ffffff;
+  border-color: rgba(90,110,165,.16);
+  box-shadow: 0 4px 20px -8px rgba(45,60,105,.07);
+}
+[data-theme="light"] .sti:active {
+  background: rgba(93,92,250,.06);
+}
+[data-theme="light"] .sti .ico.t1 {
+  background: rgba(93,92,250,.10);
+  color: #5d5cfa;
+}
+[data-theme="light"] .sti .ico.t2 {
+  background: rgba(37,99,235,.10);
+  color: #2563eb;
+}
+[data-theme="light"] .sti .ico.t3 {
+  background: rgba(5,150,105,.10);
+  color: #059669;
+}
+[data-theme="light"] .sti .ico.t4 {
+  background: rgba(225,29,72,.10);
+  color: #e11d48;
+}
+[data-theme="light"] .sti:has(.ico.t4) .t b {
+  color: #e11d48;
+}
+[data-theme="light"] .sti .ico.t-sun {
+  background: rgba(245,158,11,.14);
+  color: #d97706;
+}
+[data-theme="light"] .sti .ico.t-moon {
+  background: rgba(93,92,250,.12);
+  color: #5d5cfa;
+}
+[data-theme="light"] .pk-r:active {
+  background: rgba(93,92,250,.07);
+}
+[data-theme="light"] .pk-r.on {
+  background: rgba(93,92,250,.09);
+}
+
+/* Логотип бренду */
+[data-theme="light"] .lg-w {
+  fill: #121826 !important;
+}
+[data-theme="light"] #splash {
+  background: var(--bg);
+}
+
