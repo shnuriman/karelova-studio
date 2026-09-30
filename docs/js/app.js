@@ -41,13 +41,7 @@ if (!db) {
   const d = {};
   for (let i = 1; i <= 7; i++) d[i] = { on: i < 6 ? 1 : 0, s: '09:00', e: '18:00' };
   db = {
-    services: [
-      ['Подологія', 'Апаратний педикюр',    700, 60],
-      ['Подологія', 'Обробка врослого нігтя', 500, 45],
-      ['Шугаринг',  'Бікіні',               400, 60],
-      ['Шугаринг',  'Ноги повністю',         600, 60],
-      ['Шугаринг',  'Пахви',                200, 20],
-    ].map(a => ({ id: uid(), cat: a[0], title: a[1], desc: '', price: a[2], dur: a[3] })),
+    services: [],
     clients: [],
     appts: [],
     expenses: [],
@@ -55,6 +49,20 @@ if (!db) {
   };
   save();
 }
+
+// Одноразове скидання тестових записів, клієнтів та послуг
+const RESET_KEY = 'karelova_reset_v1';
+try {
+  if (!localStorage.getItem(RESET_KEY)) {
+    db.appts = [];
+    db.clients = [];
+    db.services = [];
+    db.expenses = [];
+    if (db.sched && db.sched.over) db.sched.over = {};
+    save();
+    localStorage.setItem(RESET_KEY, '1');
+  }
+} catch (e) {}
 
 /* ── STATE ──────────────────────────────────────────────────── */
 const now = new Date();
@@ -845,6 +853,10 @@ function bkpPg() {
       <button type="button" class="bt gh" data-a="ex">${ic('download')} Експорт копії</button>
       <button type="button" class="bt gh" data-a="im" style="margin-top:10px">${ic('upload')} Імпорт копії</button>
       <p class="mut pg-sub" style="margin-top:14px">Імпорт замінює всі поточні дані даними з файлу.</p>
+      <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--line)">
+        <p class="mut pg-sub" style="margin:0 0 10px;color:var(--exp,#ff8a8a)">Очищення всіх тестових записів, клієнтів та послуг:</p>
+        <button type="button" class="bt gh" data-a="clrAll" style="color:var(--exp,#ff8a8a);border-color:rgba(255,120,110,.35)">${ic('trash')} Очистити всі дані</button>
+      </div>
     </div>
   </div>`, stBack);
 }
@@ -929,6 +941,17 @@ const A = {
   gsch: () => schPg(),
   gsvc: () => svcPg(),
   gbkp: () => bkpPg(),
+  clrAll: () => {
+    if (!confirm('Видалити всі тестові записи, клієнтів та послуги?\nЦю дію неможливо скасувати.')) return;
+    db.appts = [];
+    db.clients = [];
+    db.services = [];
+    db.expenses = [];
+    if (db.sched && db.sched.over) db.sched.over = {};
+    save();
+    toast('Всі дані очищено');
+    stBack();
+  },
   gday: v => { PS.day = +v; $('#psd').innerHTML = psDay(); },
   gcp: () => {
     const c = PS.d.days[PS.day];
