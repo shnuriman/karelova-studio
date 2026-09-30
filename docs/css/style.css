@@ -1113,10 +1113,11 @@ html, body, button, input, select, textarea, label, h1, h2, h3, b, small, span, 
 .pn .bt.gh { box-shadow: inset 0 1px 0 rgba(255,255,255,.05); }
 
 
-/* ── Картка запису в графіку ─────────────────────────────────── */
-.ap { display: flex; align-items: stretch; gap: 12px; padding: 14px 16px 14px 14px; }
-.ap .abar { flex: none; width: 4px; border-radius: 4px; background: var(--mi2); opacity: .7; }
-.ap.pe .abar { background: var(--pe2); }
+/* ── Картка запису в графіку (смужка зліва як у списку послуг) ── */
+.ap { display: flex; align-items: stretch; gap: 12px; padding: 14px 16px; border-left-width: 3px; }
+.ap.mi { border-left-color: var(--mi2); }
+.ap.pe { border-left-color: var(--pe2); }
+.ap .abar { display: none !important; }
 .ap .am { flex: 1; min-width: 0; }
 .ap .am b { display: block; margin: 0; font: 600 15px/1.35 Inter, system-ui, sans-serif; overflow-wrap: anywhere; }
 .ap .as { margin-top: 5px; color: var(--mu); font-size: 13.5px; line-height: 1.5; }
@@ -1369,27 +1370,23 @@ body, #v, .cd, .ap, .stl, .sti, .nav, .pn, input, select, textarea, .ib, .bt.gh,
   --pe: rgba(224,96,32,.09);
   --tx: #121826;
   --mu: #64748b;
-  --grad: linear-gradient(100deg, #7c70ff 0%, #5d5cfa 45%, #3b9bff 100%);
-  --cd: linear-gradient(160deg, rgba(255,255,255,.95), rgba(246,249,255,.88));
+  --grad: linear-gradient(100deg, #5b50e6 0%, #4361ee 50%, #3b82f6 100%);
+  --cd: #ffffff;
   --bo: rgba(80,105,160,.14);
-  --ring: rgba(93,92,250,.14);
-  --glow: 0 8px 24px -8px rgba(93,92,250,.45);
-  --sh: 0 8px 30px -10px rgba(45,60,105,.08);
-  --hl: inset 0 1px 0 rgba(255,255,255,1);
+  --ring: rgba(67,97,238,.16);
+  --glow: 0 8px 24px -8px rgba(67,97,238,.45);
+  --sh: 0 8px 24px -8px rgba(45,60,105,.07);
+  --hl: none;
   --inc: #059669;
   --exp: #e11d48;
 }
 
-/* Фон */
+/* Фон (чистий однорідний, без кольорових плям у кутах) */
 [data-theme="light"] .bg {
-  background:
-    linear-gradient(to top, var(--bg) 0, rgba(244,246,251,0) 160px),
-    radial-gradient(ellipse 620px 460px at 105% -8%, rgba(124,112,255,.12), transparent 70%),
-    radial-gradient(ellipse 520px 520px at -12% 60%, rgba(59,155,255,.09), transparent 70%),
-    var(--bg);
+  background: var(--bg);
 }
 [data-theme="light"] .bg::after {
-  opacity: .015;
+  display: none;
 }
 
 /* Нижнє меню */
@@ -1507,42 +1504,68 @@ body, #v, .cd, .ap, .stl, .sti, .nav, .pn, input, select, textarea, .ib, .bt.gh,
 }
 
 /* Календар і слоти */
-[data-theme="light"] .dy:hover {
-  background: rgba(93,92,250,.09);
+[data-theme="light"] .cal .dy {
+  color: #121826;
 }
-[data-theme="light"] .dy.today {
-  color: #5d5cfa;
+[data-theme="light"] .cal .dy:hover {
+  background: rgba(67,97,238,.09);
+}
+[data-theme="light"] .cal .dy.today {
+  color: #4361ee;
+  font-weight: 700;
+}
+[data-theme="light"] .cal .dy.today u {
+  background: #4361ee;
+}
+[data-theme="light"] .cal .dy.off:not(.sel) {
+  color: #94a3b8;
+  opacity: .7;
+}
+[data-theme="light"] .cal .dy.sel,
+[data-theme="light"] .cal .dy.sel.today,
+[data-theme="light"] .cal .dy.sel.off,
+[data-theme="light"] .dy.sel {
+  background: #4361ee !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+  box-shadow: 0 4px 14px -2px rgba(67,97,238,.55) !important;
+  opacity: 1 !important;
+}
+[data-theme="light"] .cal .dy.sel .dn,
+[data-theme="light"] .cal .dy.sel sup {
+  color: #ffffff !important;
+  opacity: 1 !important;
 }
 [data-theme="light"] .slot {
-  background: rgba(255,255,255,.75);
-  border-color: rgba(90,110,165,.22);
+  background: #ffffff;
+  border-color: rgba(90,110,165,.20);
 }
 [data-theme="light"] .slot:hover {
-  border-color: rgba(93,92,250,.45);
-  background: rgba(255,255,255,.95);
+  border-color: rgba(67,97,238,.45);
+  background: #ffffff;
 }
 [data-theme="light"] .off-card {
-  background: linear-gradient(160deg, rgba(255,255,255,.94), rgba(242,246,255,.80));
+  background: #ffffff;
   border-color: rgba(90,110,165,.16);
 }
 [data-theme="light"] .off-card .ico {
-  background: rgba(93,92,250,.10);
-  color: #5d5cfa;
+  background: rgba(67,97,238,.10);
+  color: #4361ee;
 }
 
-/* Картки записів та категорій */
-[data-theme="light"] .ap {
-  background: #ffffff;
-  border-color: rgba(90,110,165,.14);
+/* Картки записів та категорій (чисті білі, без кольорового градієнта у кутку) */
+[data-theme="light"] .ap,
+[data-theme="light"] .ap.mi,
+[data-theme="light"] .ap.pe {
+  background: #ffffff !important;
+  border-color: rgba(90,110,165,.16);
   box-shadow: 0 4px 18px -6px rgba(45,60,105,.06);
 }
 [data-theme="light"] .ap.mi {
-  background: linear-gradient(150deg, rgba(37,99,235,.07), #ffffff 60%);
-  border-color: rgba(37,99,235,.22);
+  border-left: 3.5px solid #2563eb;
 }
 [data-theme="light"] .ap.pe {
-  background: linear-gradient(150deg, rgba(224,96,32,.08), #ffffff 60%);
-  border-color: rgba(224,96,32,.22);
+  border-left: 3.5px solid #e06020;
 }
 
 /* Статистика та історія */

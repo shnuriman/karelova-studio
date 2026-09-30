@@ -253,7 +253,6 @@ function apCard(a, s0) {
     return x ? esc(x.title) + (n > 1 ? ' ×' + n : '') : '';
   }).filter(Boolean).join('<br>') || 'Без послуги';
   return `<div class="ap ${s0 ? cls(s0.cat) : 'pe'} st-${a.status}" data-a="edit" data-v="${a.id}">
-    <i class="abar"></i>
     <div class="am">
       <b>${a.start} – ${ft(tm(a.start) + a.dur)} · ${esc(cn(a.cid))}</b>
       <div class="as">${lines}</div>

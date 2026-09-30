@@ -85,6 +85,74 @@ const LOGIN_CSS=`
   }
   #kr-btn:active{transform:scale(.97)}
   #kr-btn:disabled{opacity:.55;cursor:default;transform:none}
+  #kr-ov, #kr-card, .kr-inp, #kr-btn {
+    transition: background-color .22s ease, border-color .22s ease, color .22s ease, box-shadow .22s ease;
+  }
+  #kr-thm {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 16px);
+    right: 16px;
+    z-index: 100000;
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    border: 1px solid rgba(65,95,150,.3);
+    background: rgba(20,30,52,.75);
+    color: #a7a0ff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    box-shadow: 0 4px 12px rgba(0,0,0,.25);
+    transition: transform .2s cubic-bezier(.3,1.6,.5,1), background .2s, border-color .2s;
+  }
+  #kr-thm:active { transform: scale(.9); }
+
+  [data-theme="light"] #kr-ov {
+    background: #f4f6fb;
+    color: #121826;
+  }
+  [data-theme="light"] #kr-card {
+    background: #ffffff;
+    border: 1px solid rgba(80,105,160,.16);
+    box-shadow: 0 20px 60px -15px rgba(45,60,105,.12);
+  }
+  [data-theme="light"] .kr-inp {
+    background: #f8fafc;
+    border: 1px solid rgba(80,105,160,.20);
+    color: #121826;
+    -webkit-text-fill-color: #121826;
+  }
+  [data-theme="light"] .kr-inp:focus {
+    border-color: #5d5cfa;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(93,92,250,.14);
+  }
+  [data-theme="light"] .kr-inp::placeholder {
+    color: #94a3b8;
+    -webkit-text-fill-color: #94a3b8;
+  }
+  [data-theme="light"] .kr-label {
+    color: #64748b;
+  }
+  [data-theme="light"] #kr-btn {
+    background: linear-gradient(100deg, #5b50e6 0%, #4361ee 50%, #3b82f6 100%);
+    box-shadow: 0 0 0 5px rgba(67,97,238,.16), 0 10px 28px -8px rgba(67,97,238,.55);
+  }
+  [data-theme="light"] #kr-err {
+    color: #e11d48;
+  }
+  [data-theme="light"] #kr-thm {
+    background: rgba(255,255,255,.9);
+    border: 1px solid rgba(80,105,160,.20);
+    color: #4361ee;
+    box-shadow: 0 4px 14px -2px rgba(45,60,105,.1);
+  }
+  [data-theme="light"] .lg-w {
+    fill: #121826 !important;
+  }
 `;
 
 // ---------- екран входу / повідомлень
@@ -102,7 +170,31 @@ badge.textContent='Не збережено на сервері';document.body.ap
 
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-const show=h=>{ov.innerHTML='<div id="kr-card">'+h+'</div>';ov.style.display='flex'};
+const thmIco=()=>document.documentElement.getAttribute('data-theme')==='light'
+  ?'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 14.5A8 8 0 019.5 4a8 8 0 1010.5 10.5z"/></svg>'
+  :'<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2.5M12 19.5V22M4.93 4.93l1.77 1.77M17.3 17.3l1.77 1.77M2 12h2.5M19.5 12H22M4.93 19.07l1.77-1.77M17.3 6.7l1.77-1.77"/></svg>';
+
+function tgLoginThm(){
+  const isLight=document.documentElement.getAttribute('data-theme')==='light';
+  if(isLight){
+    document.documentElement.removeAttribute('data-theme');
+    try{localStorage.setItem('karelova_theme','dark')}catch(e){}
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#060a14');
+    document.querySelector('meta[name="color-scheme"]')?.setAttribute('content','dark');
+  }else{
+    document.documentElement.setAttribute('data-theme','light');
+    try{localStorage.setItem('karelova_theme','light')}catch(e){}
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#f4f6fb');
+    document.querySelector('meta[name="color-scheme"]')?.setAttribute('content','light');
+  }
+  const b=document.getElementById('kr-thm');if(b)b.innerHTML=thmIco();
+}
+
+const show=h=>{
+  ov.innerHTML=`<button id="kr-thm" aria-label="Тема" title="Змінити тему">${thmIco()}</button><div id="kr-card">${h}</div>`;
+  document.getElementById('kr-thm')?.addEventListener('click',tgLoginThm);
+  ov.style.display='flex';
+};
 const hide=()=>{ov.style.display='none'};
 
 const btnHtml='width:100%;padding:14px;border:0;border-radius:14px;min-height:54px;background:linear-gradient(100deg,#9085ff,#6f6efe 45%,#4ca9ff);color:#fff;font:500 15px/1 Inter,sans-serif;cursor:pointer;box-shadow:0 0 0 5px rgba(111,110,254,.16),0 10px 28px -8px rgba(111,110,254,.65)';
@@ -247,7 +339,7 @@ window.addEventListener('online',()=>{if(dirty())push()});
     }
   }
   window.__DB=db;window.__SAVE=save;window.__LOGOUT=logout;
-  const s=document.createElement('script');s.src='js/app.js?v=47';document.body.appendChild(s);
+  const s=document.createElement('script');s.src='js/app.js?v=50';document.body.appendChild(s);
   if(dirty())push();
 })();
 })();
