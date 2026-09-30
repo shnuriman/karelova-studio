@@ -353,14 +353,8 @@ function apCard(a, s0) {
     const end = ft(tm(a.start) + a.dur);
     return `<div class="ap brk" data-a="edit" data-v="${a.id}">
       <div class="am">
-        <div class="brk-head">
-          <span class="brk-ico">${ic('pause')}</span>
-          <b>${a.start} – ${end} · ${esc(a.title || 'Перерва')}</b>
-        </div>
+        <b>${a.start} – ${end} · ${esc(a.title || 'Перерва')}</b>
         ${a.comment ? `<div class="as">${esc(a.comment)}</div>` : ''}
-      </div>
-      <div class="ar2">
-        <span class="brk-tag">${ic('pause')} Перерва</span>
       </div>
     </div>`;
   }
@@ -605,7 +599,7 @@ function breakSheet(id, t0) {
       <textarea id="bm" placeholder="Напишіть коментар">${esc(cur.comment || '')}</textarea>
     </div>
     <div class="pg-f">
-      <button type="button" class="bt act-pri" data-a="sbrk" style="justify-content:center;height:52px;border-radius:16px">${ic('check')} Зберегти</button>
+      <button type="button" class="bt" data-a="sbrk">${ic('check')} Зберегти</button>
     </div>
   </div>`, true);
 }
