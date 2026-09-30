@@ -1221,10 +1221,6 @@ function bkpPg() {
       <button type="button" class="bt gh" data-a="ex">${ic('download')} Експорт копії</button>
       <button type="button" class="bt gh" data-a="im" style="margin-top:10px">${ic('upload')} Імпорт копії</button>
       <p class="mut pg-sub" style="margin-top:14px">Імпорт замінює всі поточні дані даними з файлу.</p>
-      <div style="margin-top:24px;padding-top:16px;border-top:1px solid var(--line)">
-        <p class="mut pg-sub" style="margin:0 0 10px;color:var(--exp,#ff8a8a)">Очищення всіх тестових записів, клієнтів та послуг:</p>
-        <button type="button" class="bt gh" data-a="clrAll" style="color:var(--exp,#ff8a8a);border-color:rgba(255,120,110,.35)">${ic('trash')} Очистити всі дані</button>
-      </div>
     </div>
   </div>`, stBack);
 }
@@ -1309,17 +1305,6 @@ const A = {
   gsch: () => schPg(),
   gsvc: () => svcPg(),
   gbkp: () => bkpPg(),
-  clrAll: () => {
-    if (!confirm('Видалити всі тестові записи, клієнтів та послуги?\nЦю дію неможливо скасувати.')) return;
-    db.appts = [];
-    db.clients = [];
-    db.services = [];
-    db.expenses = [];
-    if (db.sched && db.sched.over) db.sched.over = {};
-    save();
-    toast('Всі дані очищено');
-    stBack();
-  },
   gday: v => { PS.day = +v; $('#psd').innerHTML = psDay(); },
   gcp: () => {
     const c = PS.d.days[PS.day];

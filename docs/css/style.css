@@ -1220,6 +1220,23 @@ input, select, textarea { font-size: 16px !important; }
 .pk-f { padding: 8px 16px calc(14px + env(safe-area-inset-bottom, 0px)); border-top: 1px solid var(--line); }
 .pk-f .bt:disabled { opacity: .45; }
 
+/* Компактний попап вибору послуг: один рядок на послугу */
+.pk-pn { max-height: 76%; border-radius: 22px; }
+.pk-h { padding: 12px 12px 4px 18px; }
+.pk-h h3 { font-size: 16px; }
+.pk-h .ib { width: 34px; height: 34px; }
+.pk-h .ib .i { width: 16px; height: 16px; }
+.pk-l { padding: 0 6px 4px; }
+.pk-l .sgh { padding: 8px 12px 3px; font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+.pk-r { gap: 10px; padding: 7px 10px; border-radius: 10px; }
+.pk-r .t { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.pk-r .t b { display: inline; font-size: 14px; line-height: 1.25; }
+.pk-r .t small { flex: none; font-size: 12px; white-space: nowrap; }
+.pk-c { flex: 0 0 20px; width: 20px; height: 20px; border-radius: 6px; }
+.pk-c .i { width: 13px; height: 13px; }
+.pk-f { padding: 6px 12px calc(10px + env(safe-area-inset-bottom, 0px)); }
+.pk-f .bt { min-height: 44px; font-size: 15px; }
+
 /* ── Налаштування: список розділів ──────────────────────────── */
 .stl { background: var(--cd); border: 1px solid var(--bo); border-radius: 24px; margin-bottom: 14px; overflow: hidden; }
 .sti { display: flex; align-items: center; gap: 14px; padding: 14px 16px; cursor: pointer; border-bottom: 1px solid var(--line); }
