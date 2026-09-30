@@ -371,6 +371,7 @@ function apSheet(id, t0) {
     : { id: '', date: S.d, start: t0, dur: db.sched.step, price: 0, svc: [], status: 'plan', cid: '', comment: '', photos: [] };
   cur = JSON.parse(JSON.stringify(a));
   cur.svc = cur.svc || [];
+  if (!id && cur.status == 'plan' && isPast(cur)) cur.status = 'done';
   sheet(`<div class="pn pg">
     <div class="pg-h">
       <button type="button" class="ib pg-back" data-a="close" aria-label="Назад">${ic('prev')}</button>
@@ -849,6 +850,10 @@ function apChange(k) {
     else toast('Кінець має бути пізніше за початок', 'warn');
     syncTimes();
   }
+  if (k == 'xdt' || k == 'xs' || k == 'xe') {
+    const t = { ...cur, start: V('xs') || cur.start };
+    if (V('xt') == 'plan' && isPast(t)) { $('#xt').value = 'done'; thint(); }
+  }
   recH();
 }
 
@@ -994,6 +999,7 @@ const A = {
       if (m) cur.cid = m.id;
     }
     if (!cur.cid) { toast('Оберіть або додайте клієнта', 'warn'); return; }
+    if (cur.status == 'plan' && isPast(cur)) cur.status = 'done';
     if (cur.status != 'canc') {
       const a1 = tm(cur.start), b1 = a1 + cur.dur;
       const clash = db.appts.filter(x => x.id != cur.id && x.date == cur.date && x.status != 'canc'
@@ -1234,7 +1240,25 @@ document.addEventListener('keydown', e => {
   if (e.key == 'Escape' && $('#sh').classList.contains('on')) { $('#sh').className = ''; }
 });
 
+/* ── АВТОЗАВЕРШЕННЯ ─────────────────────────────────────────── */
+// запис вважається минулим, коли його час закінчення вже пройшов
+function isPast(a) {
+  const n = new Date(), t = iso(n);
+  return a.date < t || (a.date == t && tm(a.start) + a.dur <= n.getHours() * 60 + n.getMinutes());
+}
+// «Заплановано» → «Завершено» для всіх записів, час яких минув (скасовані не чіпаємо)
+function autoDone() {
+  let ch = 0;
+  db.appts.forEach(a => { if (a.status == 'plan' && isPast(a)) { a.status = 'done'; ch++; } });
+  if (ch) save();
+  return ch;
+}
+const autoTick = () => { if (autoDone() && !$('#sh').classList.contains('on')) render(true); };
+setInterval(autoTick, 60000);
+document.addEventListener('visibilitychange', () => { if (document.visibilityState == 'visible') autoTick(); });
+
 /* ── INIT ───────────────────────────────────────────────────── */
+autoDone();
 render();
 
 setTimeout(() => {
