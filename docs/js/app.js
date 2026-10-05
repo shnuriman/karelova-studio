@@ -553,6 +553,7 @@ function apCard(a, s0) {
     <div class="am">
       <b>${a.start} – ${ft(tm(a.start) + a.dur)} · ${esc(cn(a.cid))}</b>
       <div class="as">${lines}</div>
+      ${a.comment ? `<div class="ap-cmt">${ic('msg')} <em>${esc(a.comment)}</em></div>` : ''}
     </div>
     <div class="ar2">
       <span class="si" title="${ST[a.status] || ''}">${ic(icn)}</span>
@@ -973,7 +974,7 @@ function st() {
 
   const item = k => {
     const m = mstat(k), y = k.slice(0, 4), mo = +k.slice(5) - 1;
-    const open = k in S.mx ? S.mx[k] : k == prev;   // за замовчуванням розгорнутий лише попередній місяць
+    const open = k in S.mx ? S.mx[k] : k == cur;   // за замовчуванням розгорнутий лише поточний місяць
     return `
     <div class="mo ${open ? 'open' : ''}">
       <div class="mo-h" role="button" tabindex="0" data-a="mt" data-v="${k}">

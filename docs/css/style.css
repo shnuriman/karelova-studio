@@ -1130,6 +1130,9 @@ html, body, button, input, select, textarea, label, h1, h2, h3, b, small, span, 
 .ap .si .i { width: 17px; height: 17px; stroke-width: 1.6; display: block; color: var(--mu); }
 .ap.st-done .si .i { color: var(--inc, #63d9a6); }
 .ap.canc .am b, .ap.st-canc .am b { text-decoration: line-through; }
+.ap .ap-cmt { display: flex; align-items: center; gap: 4px; margin-top: 4px; color: var(--mu); font-size: 11.5px; line-height: 1.4; }
+.ap .ap-cmt .i { width: 11px; height: 11px; flex: none; opacity: .7; stroke-width: 2; }
+.ap .ap-cmt em { font-style: italic; overflow-wrap: anywhere; }
 
 /* Вільний слот по центру: «09:00 — вільно» */
 .slot { justify-content: center; gap: 8px; }
