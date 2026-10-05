@@ -758,7 +758,7 @@ function breakSheet(id, t0) {
     : {
         id: '',
         type: 'break',
-        title: 'Подія',
+        title: '',
         date: S.d,
         start: t0 || '09:00',
         dur: db.sched.step || 30,
@@ -780,7 +780,7 @@ function breakSheet(id, t0) {
     </div>
     <div class="pg-b">
       <div class="fh first">${ic('file')} Назва</div>
-      <input id="bn" value="${esc(cur.title || 'Подія')}" placeholder="Назва події" autocomplete="off">
+      <input id="bn" value="${esc(cur.title)}" placeholder="Назва події" autocomplete="off">
 
       <div class="fh">${ic('clock')} Час події</div>
       <label>Дата</label>
