@@ -522,6 +522,13 @@ function sch() {
   }
   sl += list.filter(a => a.status == 'canc').map(a => apCard(a, sv(a.svc[0]))).join('');
   const dayLabel = dt.getDate() + ' ' + MN_GEN[dt.getMonth()] + ', ' + DN[(dt.getDay() + 6) % 7];
+  const dayBooked = list.filter(a => a.status != 'canc' && a.type != 'break');
+  const dayDone   = dayBooked.filter(a => a.status == 'done');
+  const dayTotal  = dayBooked.reduce((s, a) => s + (a.price || 0), 0);
+  const hasDone   = dayDone.length > 0;
+  const sumCls    = dayTotal === 0 ? 'is-zero' : hasDone ? 'is-done' : '';
+  const sumLbl    = hasDone ? 'Зароблено' : dayTotal > 0 ? 'Заплановано' : 'Немає записів';
+  const daySumHtml = `<span class="day-sum${sumCls ? ' ' + sumCls : ''}"><span class="day-sum-lbl">${sumLbl}</span><span class="day-sum-val">${dayTotal > 0 ? money(dayTotal) : '—'}</span></span>`;
   return `<h1>${MN[mo]} ${y}
     <span>
       <button class="ib" data-a="pm" data-v="-1">${ic('prev')}</button>
@@ -529,7 +536,7 @@ function sch() {
     </span>
   </h1>
   <div class="cd"><div class="cal">${cells}</div></div>
-  <h3>${dayLabel}</h3>
+  <div class="day-h"><h3>${dayLabel}</h3>${daySumHtml}</div>
   ${sl}
   ${cfg.on ? `<button class="bt gh" style="margin-top:6px" data-a="dof">${ic('moon')} Зробити вихідним</button>` : ''}`;
 }
