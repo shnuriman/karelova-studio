@@ -1955,16 +1955,9 @@ body, #v, .cd, .ap, .stl, .sti, .nav, .pn, input, select, textarea, .ib, .bt.gh,
   color: #b45309;
 }
 
-/* ── Заставка: свічення без filter (на iOS filter+animation малює прямокутник за логотипом) ── */
+/* ── Заставка: чистий фон без плями за логотипом ── */
 #splash::after {
-  content: '';
-  position: absolute;
-  left: 50%; top: 50%;
-  width: min(520px, 110vw);
-  height: 240px;
-  transform: translate(-50%, -50%);
-  background: radial-gradient(closest-side, rgba(9,187,198,.14), transparent);
-  pointer-events: none;
+  display: none;
 }
 
 

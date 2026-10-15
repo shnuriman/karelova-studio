@@ -1060,20 +1060,15 @@ function cs(id) {
 
       <div class="cl-history-block" style="margin-top:14px">
         <div class="cl-sec-head">
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="cl-sec-title">Придбана продукція ${clDone.length ? `(${clDone.length})` : ''}</span>
-            ${prodSpent ? `<span class="cl-sec-sum">${money(prodSpent)}</span>` : ''}
-          </div>
-          <button type="button" class="bt-add-sal-sm" data-a="nsal-cl" data-v="${id}">
-            ${ic('plus')} Додати продаж
-          </button>
+          <span class="cl-sec-title">Придбана продукція ${clDone.length ? `(${clDone.length})` : ''}</span>
+          ${prodSpent ? `<span class="cl-sec-sum">${money(prodSpent)}</span>` : ''}
         </div>
         ${clDone.length ? `
           <div class="cl-sales-list">
             ${clDone.map(s => `
               <div class="cd sal-card" data-a="esal" data-v="${s.id}" style="margin-bottom:10px;cursor:pointer">
-                <div class="sal-top-row">
-                  <div class="sal-client-info">
+                <div class="sal-top-row" style="align-items:center">
+                  <div style="display:flex;align-items:center;gap:10px">
                     <span class="sal-cname">${fdt(s.date)}</span>
                     <span class="sal-status-label done">Видано</span>
                   </div>
