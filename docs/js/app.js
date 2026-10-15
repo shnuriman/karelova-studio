@@ -26,6 +26,12 @@ const ft  = m => String(m / 60 | 0).padStart(2, '0') + ':' + String(m % 60).padS
 const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
 const fdt = d => d.split('-').reverse().join('.');
 const money = n => Math.round(n).toLocaleString('uk-UA') + ' ₴';
+const nph = p => {
+  p = (p || '').split(':::')[0].replace(/[^\d+]/g, '');
+  if (/^0\d{9}$/.test(p)) return '+38' + p;
+  if (/^380\d{9}$/.test(p)) return '+' + p;
+  return p;
+};
 
 const MN = ['Січень','Лютий','Березень','Квітень','Травень','Червень','Липень','Серпень','Вересень','Жовтень','Листопад','Грудень'];
 const MN_GEN = ['січня','лютого','березня','квітня','травня','червня','липня','серпня','вересня','жовтня','листопада','грудня'];
@@ -411,6 +417,7 @@ const dirty = () => $('#sh').classList.contains('on')
 const P = {
   cal:     '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
   archive: '<rect x="3" y="3" width="18" height="4" rx="1"/><path d="M5 7v13a2 2 0 002 2h10a2 2 0 002-2V7M10 12h4"/>',
+  camera:  '<path d="M23 19a2 2 0 01-2 2H3a2 2 0 01-2-2V8a2 2 0 012-2h4l2-3h6l2 3h4a2 2 0 012 2z"/><circle cx="12" cy="13" r="4"/>',
   users:   '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.5 14.2c2.2.1 3.6 1.6 4 4.3"/>',
   bag:     '<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/>',
   chart:   '<path d="M5 20V11M12 20V5M19 20v-7"/>',
@@ -714,6 +721,9 @@ function apSheet(id, t0) {
   cur.svc = cur.svc || [];
   if (!id && cur.status == 'plan' && isPast(cur)) cur.status = 'done';
   const clWait = cur.cid ? (db.sales || []).filter(s => s.cid == cur.cid && s.status == 'wait') : [];
+  const clObj = cur.cid ? db.clients.find(c => c.id == cur.cid) : null;
+  const clPhone = clObj ? (clObj.phone || '') : '';
+
   sheet(`<div class="pn pg">
     <div class="pg-h">
       <button type="button" class="ib pg-back" data-a="close" aria-label="Назад">${ic('prev')}</button>
@@ -729,20 +739,37 @@ function apSheet(id, t0) {
     </div>
     <div class="sgl" id="xl"></div>
 
+    <div class="fld" id="xcp-wrap" style="margin-top:8px">
+      <input id="xcp" type="tel" inputmode="tel" placeholder="+380… (додати або змінити телефон)" value="${esc(clPhone)}">
+      <a id="xcp-call" href="${clPhone ? 'tel:' + nph(clPhone) : 'javascript:void(0)'}" class="sf" style="right:12px;color:${clPhone ? 'var(--ac2)' : 'var(--mu)'};display:flex;align-items:center;height:100%;text-decoration:none" title="${clPhone ? 'Зателефонувати' : 'Телефон'}">${ic('phone')}</a>
+    </div>
+
     ${clWait.length ? `
-      <div class="sal-client-alert">
-        <div class="sca-h">${ic('bag')} У клієнта є замовлення, що очікує видачі:</div>
-        ${clWait.map(s => `
-          <div class="sca-row">
-            <div>
-              <span>${esc((s.items || []).map(i => i.title + ' ×' + i.qty).join(', '))}</span>
-              <small>${fdt(s.date)} · ${money(s.total)}</small>
-            </div>
-            <button type="button" class="bt-pickup-sm" data-a="pick-sal" data-v="${s.id}">
-              ${ic('check')} Віддати
-            </button>
+      <div class="sal-card sal-wait" style="margin:12px 0 6px">
+        <div class="sal-top-row" data-a="esal" data-v="${clWait[0].id}">
+          <div class="sal-client-info">
+            <span class="sal-cname" style="color:#facc15">${ic('bag')} Замовлення очікує видачі</span>
+            <span class="sal-cdate">${fdt(clWait[0].date)}</span>
           </div>
-        `).join('')}
+          <div class="sal-total-price">${money(clWait[0].total)}</div>
+        </div>
+        <div class="sal-card-items" data-a="esal" data-v="${clWait[0].id}">
+          ${(clWait[0].items || []).map(it => `
+            <div class="sal-ci-row">
+              <span class="sal-ci-name">${esc(it.title)}</span>
+              <div class="sal-ci-right">
+                ${it.vol ? `<span class="sal-ci-vol">${esc(it.vol)}</span>` : ''}
+                <span class="sal-ci-qty">×${it.qty || 1}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+        <div class="sal-card-footer">
+          <span class="sal-status-label wait">Очікує видачі</span>
+          <button type="button" class="bt-pickup" data-a="pick-sal" data-v="${clWait[0].id}">
+            ${ic('check')} Клієнт забрав
+          </button>
+        </div>
       </div>
     ` : ''}
 
@@ -758,10 +785,7 @@ function apSheet(id, t0) {
 
     <div class="fh">${ic('file')} Послуги</div>
     <div id="xsv">${svHtml()}</div>
-    <div class="row" style="gap:8px">
-      <button type="button" class="bt gh" data-a="tsp" style="flex:1">${ic('plus')} Додати послугу</button>
-      <button type="button" class="bt gh" data-a="nsal-ap" style="flex:1">${ic('bag')} Продати догляд</button>
-    </div>
+    <button type="button" class="bt gh" data-a="tsp" style="margin-top:8px">${ic('plus')} Додати послугу</button>
 
     <div class="fh">${ic('cash')} Ціна</div>
     <div class="fld"><input id="xp" type="number" inputmode="decimal" min="0" value="${cur.price}"><em class="sf">₴</em></div>
@@ -797,10 +821,6 @@ function actSheet(t0) {
         <button type="button" class="act-b act-pri" data-a="act-ap" data-v="${t0 || ''}">
           <span class="act-ico">${ic('plus')}</span>
           <span>Створити новий запис</span>
-        </button>
-        <button type="button" class="act-b act-sec" data-a="act-sal" data-v="${S.d}">
-          <span class="act-ico">${ic('bag')}</span>
-          <span>Продати продукцію</span>
         </button>
         <button type="button" class="act-b act-sec" data-a="act-brk" data-v="${t0 || ''}">
           <span class="act-ico">${ic('cal')}</span>
@@ -877,6 +897,22 @@ const rz = f => new Promise(r => {
   i.src = URL.createObjectURL(f);
 });
 
+const rzSq = f => new Promise(r => {
+  const i = new Image();
+  i.onload = () => {
+    const s = 400;
+    const c = document.createElement('canvas');
+    c.width = s; c.height = s;
+    const ctx = c.getContext('2d');
+    const minD = Math.min(i.width, i.height);
+    const sx = (i.width - minD) / 2;
+    const sy = (i.height - minD) / 2;
+    ctx.drawImage(i, sx, sy, minD, minD, 0, 0, s, s);
+    r(c.toDataURL('image/jpeg', .8));
+  };
+  i.src = URL.createObjectURL(f);
+});
+
 /* ── CLIENTS TAB ────────────────────────────────────────────── */
 function cli() {
   return `<h1>Клієнти
@@ -916,8 +952,8 @@ function cs(id) {
 
   sheet(`
     ${shHead(id ? '' : 'Новий клієнт', id ? 'dc' : '', id)}
-    <label>Ім\u2019я*</label>
-    <input id="cn" value="${esc(c.name)}" placeholder="Ім\u2019я клієнта">
+    <label>Ім’я*</label>
+    <input id="cn" value="${esc(c.name)}" placeholder="Ім’я клієнта">
     <label>Телефон</label>
     <input id="cp" type="tel" placeholder="+380…" value="${esc(c.phone)}">
     <div id="mo" style="${id ? '' : 'display:none'}">
@@ -926,44 +962,105 @@ function cs(id) {
     </div>
     ${id ? '' : '<p class="mut" data-a="mo" style="color:var(--ac2);cursor:pointer">Детальне додавання ▾</p>'}
     ${id ? `
-      <div class="cd hist">
-        <div class="hist-top">
-          <div><small>Всього сплачено</small><b>${money(totalSpent)}</b></div>
-          <div class="r"><small>Візитів / Покупок</small><b>${h.length} / ${clDone.length}</b></div>
+      <div class="cd cl-summary-card">
+        <div class="cl-stat-col">
+          <span class="cl-stat-lbl">Всього сплачено</span>
+          <b class="cl-stat-val">${money(totalSpent)}</b>
         </div>
-        ${clWait.length ? `
-          <div class="sal-client-alert">
-            <div class="sca-h">${ic('bag')} Очікує видачі (${clWait.length}):</div>
-            ${clWait.map(s => `
-              <div class="sca-row">
-                <div>
-                  <span>${esc((s.items || []).map(i => i.title + ' ×' + i.qty).join(', '))}</span>
-                  <small>${fdt(s.date)} · ${money(s.total)}</small>
-                </div>
-                <button type="button" class="bt-pickup-sm" data-a="pick-sal" data-v="${s.id}">
-                  ${ic('check')} Віддати
-                </button>
+        <div class="cl-stat-col">
+          <span class="cl-stat-lbl">Візитів</span>
+          <b class="cl-stat-val">${h.length}</b>
+        </div>
+        <div class="cl-stat-col">
+          <span class="cl-stat-lbl">Покупок</span>
+          <b class="cl-stat-val">${clDone.length}</b>
+        </div>
+      </div>
+
+      ${clWait.length ? `
+        <div class="cl-sec-head" style="margin-top:14px">
+          <span class="cl-sec-title wait-title">${ic('bag')} До видачі клієнту</span>
+          <span class="sal-status-label wait">${clWait.length > 1 ? clWait.length + ' замовл.' : 'Очікує видачі'}</span>
+        </div>
+        ${clWait.map(s => `
+          <div class="cd sal-card sal-wait" style="margin-bottom:12px">
+            <div class="sal-top-row" data-a="esal" data-v="${s.id}">
+              <div class="sal-client-info">
+                <span class="sal-cname">Замовлення від ${fdt(s.date)}</span>
+                ${s.note ? `<span class="sal-cdate">${esc(s.note)}</span>` : ''}
               </div>
-            `).join('')}
+              <div class="sal-total-price">${money(s.total)}</div>
+            </div>
+
+            <div class="sal-card-items" data-a="esal" data-v="${s.id}">
+              ${(s.items || []).map(it => `
+                <div class="sal-ci-row">
+                  <span class="sal-ci-name">${esc(it.title)}</span>
+                  <div class="sal-ci-right">
+                    ${it.vol ? `<span class="sal-ci-vol">${esc(it.vol)}</span>` : ''}
+                    <span class="sal-ci-qty">×${it.qty || 1}</span>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+
+            <div class="sal-card-footer">
+              <span class="sal-status-label wait">Очікує видачі</span>
+              <button type="button" class="bt-pickup" data-a="pick-sal" data-v="${s.id}">
+                ${ic('check')} Клієнт забрав
+              </button>
+            </div>
           </div>
-        ` : ''}
-        ${secH('Візити', h.length ? money(spent) : '')}
-        ${h.length ? `<div class="hist-list">${h.map(a => `<div class="hv st-${a.status}" data-a="edit" data-v="${a.id}">
-          <div class="hv-d">${fdt(a.date)}${a.status == 'plan' ? '<i>заплановано</i>' : a.status == 'canc' ? '<i>скасовано</i>' : ''}</div>
-          <div class="hv-s">${esc(svTitle(a))}</div>
-          <div class="hv-p">${money(a.price)}</div>
-        </div>`).join('')}</div>` : '<p class="mut" style="margin:8px 0 0">Ще немає візитів</p>'}
-        ${secH('Придбана продукція', clDone.length ? money(prodSpent) : '')}
-        ${clDone.length ? `<div class="hist-list">${clDone.map(s => `
-          <div class="hv" data-a="esal" data-v="${s.id}">
-            <div class="hv-d">${fdt(s.date)} <i>видано</i></div>
-            <div class="hv-s">${esc((s.items || []).map(i => i.title + (i.vol ? ' (' + i.vol + ')' : '') + ' ×' + i.qty).join(', '))}</div>
-            <div class="hv-p">${money(s.total)}</div>
+        `).join('')}
+      ` : ''}
+
+      <div class="cl-history-block" style="margin-top:14px">
+        <div class="cl-sec-head">
+          <span class="cl-sec-title">Візити ${h.length ? `(${h.length})` : ''}</span>
+          ${h.length ? `<span class="cl-sec-sum">${money(spent)}</span>` : ''}
+        </div>
+        ${h.length ? `
+          <div class="cd cl-hist-box">
+            <div class="hist-list">
+              ${h.map(a => `
+                <div class="hv st-${a.status}" data-a="edit" data-v="${a.id}">
+                  <div class="hv-d">${fdt(a.date)}${a.status == 'plan' ? '<i>заплановано</i>' : a.status == 'canc' ? '<i>скасовано</i>' : ''}</div>
+                  <div class="hv-s">${esc(svTitle(a))}</div>
+                  <div class="hv-p">${money(a.price)}</div>
+                </div>
+              `).join('')}
+            </div>
           </div>
-        `).join('')}</div>` : '<p class="mut" style="margin:8px 0 0">Куплених засобів ще немає</p>'}
-        <button type="button" class="bt gh" data-a="nsal-cl" data-v="${id}" style="margin-top:14px">${ic('plus')} Додати замовлення клієнту</button>
-      </div>` : ''}
-    <div class="row" style="margin-top:16px">
+        ` : `
+          <div class="cl-empty-box">Ще немає візитів</div>
+        `}
+      </div>
+
+      <div class="cl-history-block" style="margin-top:14px">
+        <div class="cl-sec-head">
+          <span class="cl-sec-title">Придбана продукція ${clDone.length ? `(${clDone.length})` : ''}</span>
+          <button type="button" class="bt-add-sal-sm" data-a="nsal-cl" data-v="${id}">
+            ${ic('plus')} Додати продаж
+          </button>
+        </div>
+        ${clDone.length ? `
+          <div class="cd cl-hist-box">
+            <div class="hist-list">
+              ${clDone.map(s => `
+                <div class="hv" data-a="esal" data-v="${s.id}">
+                  <div class="hv-d">${fdt(s.date)} <i>видано</i></div>
+                  <div class="hv-s">${esc((s.items || []).map(i => i.title + (i.vol ? ' (' + i.vol + ')' : '') + ' ×' + i.qty).join(', '))}</div>
+                  <div class="hv-p">${money(s.total)}</div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        ` : `
+          <div class="cl-empty-box">Куплених засобів ще немає</div>
+        `}
+      </div>
+    ` : ''}
+    <div class="row" style="margin-top:18px">
       ${closeBtn()}
       <button class="bt" data-a="sc" data-v="${id || ''}">${ic('check')} Зберегти</button>
     </div>
@@ -988,22 +1085,11 @@ function sal() {
 
     <div class="sal-bar-row">
       <span class="sal-bar-title">Актуальні замовлення (${waitSales.length})</span>
-      <button type="button" class="sal-arch-pill" data-a="sal-arch">
-        ${ic('archive')} Архів замовлень${doneSales.length ? ` (${doneSales.length})` : ''}
-      </button>
     </div>
 
     <div id="sal-list">
       ${salListRows(waitSales, 'wait')}
     </div>
-
-    ${doneSales.length ? `
-      <div class="sal-arch-footer-link">
-        <button type="button" class="sal-arch-ghost-btn" data-a="sal-arch">
-          ${ic('archive')} Перейти до архіву замовлень (${doneSales.length})
-        </button>
-      </div>
-    ` : ''}
   `;
 }
 
@@ -1236,12 +1322,13 @@ function pkProdRows(q) {
   }
 
   return prods.map(p => `
-    <div class="scd pr" data-a="add-it" data-v="${p.id}" style="cursor:pointer;margin-bottom:8px">
-      <b>${esc(p.title)}</b>
-      <small>
-        ${p.brand ? esc(p.brand) + ' · ' : ''}${p.vol ? esc(p.vol) + ' · ' : ''}
-        <b>${money(p.price)}</b> · Закупка: ${money(p.cost)} · <span class="pl">+${money(p.price - p.cost)}</span>
-      </small>
+    <div class="cd" data-a="add-it" data-v="${p.id}" style="cursor:pointer;margin-bottom:8px;padding:12px 14px">
+      <div style="font:600 15px/1.25 Inter,sans-serif;color:var(--tx)">${esc(p.title)}</div>
+      <div style="display:flex;align-items:center;gap:6px;margin:4px 0 6px">
+        ${p.brand ? `<span style="font:500 12px/1 Inter;color:var(--mu)">${esc(p.brand)}</span>` : ''}
+        ${p.vol ? `<span style="font:500 11.5px/1 Inter;color:var(--mu);background:rgba(255,255,255,.06);padding:2px 6px;border-radius:6px">${esc(p.vol)}</span>` : ''}
+      </div>
+      <div style="font:700 15px/1 Inter;color:var(--tx)">${money(p.price)}</div>
     </div>
   `).join('');
 }
@@ -1317,11 +1404,19 @@ const mstat = k => sum(
   (db.sales || []).filter(s => s.date.startsWith(k))
 );
 
-const catBars = cat => {
-  const mx = Math.max(1, cat.Подологія + cat.Шугаринг);
-  return CATS.map(c => `
-    <div class="cr"><span>${c}</span><span>${money(cat[c])}</span></div>
-    <div class="bar"><i style="width:${cat[c] / mx * 100}%;background:var(${c == 'Подологія' ? '--mi2' : '--pe2'})"></i></div>`).join('');
+const catBars = (cat, salesInc = 0) => {
+  const sInc = salesInc || 0;
+  const pod = cat.Подологія || 0;
+  const shug = cat.Шугаринг || 0;
+  const mx = Math.max(1, pod + shug + sInc);
+  return `
+    <div class="cr"><span>Подологія</span><span>${money(pod)}</span></div>
+    <div class="bar"><i style="width:${pod / mx * 100}%;background:var(--mi2)"></i></div>
+    <div class="cr"><span>Шугаринг</span><span>${money(shug)}</span></div>
+    <div class="bar"><i style="width:${shug / mx * 100}%;background:var(--pe2)"></i></div>
+    <div class="cr"><span>Продукція</span><span>${money(sInc)}</span></div>
+    <div class="bar"><i style="width:${sInc / mx * 100}%;background:var(--pr2)"></i></div>
+  `;
 };
 
 // Коротка назва послуг запису: «Апаратний педикюр +3»
@@ -1400,9 +1495,8 @@ function st() {
       <div class="mo-b"><div><div class="in">
         <div class="mk">
           <div><small>Послуги</small><b class="inc">${money(m.svcInc)}</b></div>
-          <div><small>Продажі (чистий)</small><b style="color:var(--done-tx)">+${money(m.salesProfit)}</b></div>
+          <div><small>Продажі (чистий)</small><b class="sal-tx">+${money(m.salesProfit)}</b></div>
           <div><small>Витрати кабінету</small><b class="exp">${money(m.out)}</b></div>
-          <div><small>Чистий прибуток</small><b class="${m.net < 0 ? 'neg' : ''}">${money(m.net)}</b></div>
         </div>
         ${secH('Прийоми', m.done.length, true)}
         ${apRows(m.done)}
@@ -1427,13 +1521,13 @@ function st() {
     </div>
     <div class="kp">
       <div class="cd inc-c"><small class="mut">Послуги</small><b class="inc">${money(all.svcInc)}</b></div>
-      <div class="cd" style="border-left:3px solid var(--pr2)"><small class="mut">Заробіток з продажів</small><b style="color:var(--done-tx)">+${money(all.salesProfit)}</b></div>
+      <div class="cd sal-c"><small class="mut">Заробіток з продажів</small><b class="sal-tx">+${money(all.salesProfit)}</b></div>
       <div class="cd exp-c"><small class="mut">Витрати</small><b class="exp">${money(all.out)}</b></div>
       <div class="cd"><small class="mut">Клієнтів</small><b>${all.cl}</b></div>
     </div>
     <div class="cd" style="margin-top:10px">
-      <b>Дохід за напрямками послуг</b>
-      ${catBars(all.cat)}
+      <b>Дохід за напрямками</b>
+      ${catBars(all.cat, all.salesInc)}
     </div>
     <button class="bt" data-a="es" data-v="">${ic('plus')} Додати витрату</button>
     <div class="sec" style="margin-top:26px">Історія по місяцях</div>
@@ -1653,35 +1747,54 @@ function bkpPg() {
 }
 
 /* ── PRODUCT CATALOG (SETTINGS) ────────────────────────────── */
+let curProdPhoto = '';
+
 function prodRows(q) {
   q = (q || '').toLowerCase().trim();
   const prods = (db.products || []).filter(p => !q || p.title.toLowerCase().includes(q) || (p.brand || '').toLowerCase().includes(q));
   if (!prods.length) {
     return `<p class="mut" style="text-align:center;margin-top:28px">${q ? 'Нічого не знайдено' : 'Продукції ще немає. Натисніть «+», щоб додати перший засіб.'}</p>`;
   }
-  return prods.map(p => `
-    <div class="scd pr" data-a="eprod" data-v="${p.id}" style="cursor:pointer">
-      <b>${esc(p.title)}</b>
-      <small>
-        ${p.brand ? esc(p.brand) + ' · ' : ''}${p.vol ? esc(p.vol) + ' · ' : ''}
-        Продаж: <b>${money(p.price)}</b> · Закупка: ${money(p.cost)} · <span class="pl">+${money(p.price - p.cost)}</span>
-      </small>
-    </div>
-  `).join('');
+  return prods.map(p => {
+    const margin = (+p.price || 0) - (+p.cost || 0);
+    return `
+      <div class="cd prod-catalog-card" data-a="eprod" data-v="${p.id}">
+        <div class="pcc-thumb-wrap">
+          ${p.photo
+            ? `<img src="${p.photo}" class="pcc-img" alt="${esc(p.title)}">`
+            : `<div class="pcc-placeholder">${ic('camera')}</div>`
+          }
+        </div>
+        <div class="pcc-body">
+          <div class="pcc-title">${esc(p.title)}</div>
+          <div class="pcc-tags">
+            ${p.brand ? `<span class="pcc-brand">${esc(p.brand)}</span>` : ''}
+            ${p.vol ? `<span class="pcc-vol">${esc(p.vol)}</span>` : ''}
+          </div>
+          <div class="pcc-fin">
+            <span class="pcc-price">${money(p.price)}</span>
+            <span class="pcc-cost">Закупка: ${money(p.cost)}</span>
+            <span class="pcc-margin">+${money(margin)}</span>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join('');
 }
 
 function prodPg() {
   pgOpen(`<div class="pn pg">
     ${pgHead('Каталог продукції', `<button type="button" class="ib" data-a="eprod" data-v="" aria-label="Додати засіб">${ic('plus')}</button>`)}
     <div class="pg-b">
-      <div class="sr" style="margin:10px 0 6px">${ic('search')}<input id="prod_q" autocomplete="off" placeholder="Пошук за назвою чи брендом"></div>
+      <div class="sr" style="margin:10px 0 12px">${ic('search')}<input id="prod_q" autocomplete="off" placeholder="Пошук за назвою чи брендом"></div>
       <div id="prod_l">${prodRows('')}</div>
     </div>
   </div>`, stBack);
 }
 
 function prodSheet(id) {
-  const p = id ? (pr(id) || {}) : { title: '', brand: '', vol: '', cost: '', price: '', note: '' };
+  const p = id ? (pr(id) || {}) : { title: '', brand: '', vol: '', cost: '', price: '', note: '', photo: '' };
+  curProdPhoto = p.photo || '';
   const quickVols = ['30 мл', '50 мл', '100 мл', '150 мл', '200 мл', '250 мл', '500 мл', '50 г', '100 г'];
 
   const diff = (+p.price || 0) - (+p.cost || 0);
@@ -1690,6 +1803,22 @@ function prodSheet(id) {
   pgOpen(`<div class="pn pg">
     ${pgHead(id ? 'Редагувати засіб' : 'Новий засіб', id ? `<button type="button" class="ib dl" data-a="dprod" data-v="${id}" aria-label="Видалити" title="Видалити">${ic('trash')}</button>` : '')}
     <div class="pg-b">
+      <div class="prod-photo-section">
+        <div id="prod_photo_preview" class="prod-photo-box">
+          ${curProdPhoto ? `
+            <img src="${curProdPhoto}" class="prod-photo-img" alt="Фото засобу">
+            <button type="button" class="prod-photo-del" data-a="del-pphoto" aria-label="Видалити фото">${ic('x')}</button>
+          ` : `
+            <label for="prod_photo_file" class="prod-photo-upload-label">
+              ${ic('camera')}
+              <span>Додати фото</span>
+            </label>
+          `}
+        </div>
+        <input type="file" id="prod_photo_file" accept="image/*" style="display:none">
+        <small class="mut">Квадратне фото для каталогу</small>
+      </div>
+
       <div class="fh first">${ic('bag')} Назва продукції</div>
       <input id="pt" value="${esc(p.title)}" placeholder="Наприклад: Крем для стоп з сечовиною 10%">
 
@@ -1870,15 +1999,26 @@ const A = {
   // клієнт: вибір зі списку / створення нового прямо з пошуку
   pcl: v => {
     cur.cid = v;
-    $('#xq').value = cn(v);
+    const c = db.clients.find(x => x.id == v);
+    $('#xq').value = c ? c.name : cn(v);
     $('#xcw').classList.add('ok');
+    if ($('#xcp')) {
+      const ph = c ? (c.phone || '') : '';
+      $('#xcp').value = ph;
+      const callEl = $('#xcp-call');
+      if (callEl) {
+        callEl.href = ph ? 'tel:' + nph(ph) : 'javascript:void(0)';
+        callEl.style.color = ph ? 'var(--ac2)' : 'var(--mu)';
+      }
+    }
     $('#xl').innerHTML = '';
     $('#xq').blur();
   },
   acl: () => {
     const n = V('xq').trim().replace(/\s+/g, ' ');
     if (!n) return;
-    const c = { id: uid(), name: n, phone: '', ig: '', note: '' };
+    const phone = $('#xcp') ? $('#xcp').value.trim() : '';
+    const c = { id: uid(), name: n, phone: phone, ig: '', note: '' };
     db.clients.push(c);
     save();
     toast('Клієнта додано');
@@ -1918,10 +2058,24 @@ const A = {
 
   sa: () => {
     rd();
+    const phoneVal = $('#xcp') ? $('#xcp').value.trim() : '';
     if (!cur.cid) {
       const q = V('xq').trim().toLowerCase();
       const m = q && db.clients.find(c => c.name.trim().toLowerCase() == q);
       if (m) cur.cid = m.id;
+    }
+    if (!cur.cid) {
+      const n = V('xq').trim().replace(/\s+/g, ' ');
+      if (n) {
+        const newC = { id: uid(), name: n, phone: phoneVal, ig: '', note: '' };
+        db.clients.push(newC);
+        cur.cid = newC.id;
+      }
+    } else {
+      const cl = db.clients.find(c => c.id == cur.cid);
+      if (cl && phoneVal !== undefined && (cl.phone || '') !== phoneVal) {
+        cl.phone = phoneVal;
+      }
     }
     if (!cur.cid) { toast('Оберіть або додайте клієнта', 'warn'); return; }
     if (cur.status == 'plan' && isPast(cur)) cur.status = 'done';
@@ -2073,8 +2227,12 @@ const A = {
     if (s) {
       s.status = 'done';
       save();
-      toast('Замовлення видано клієнту та перенесено в архів');
-      render(true);
+      toast('Замовлення видано клієнту');
+      if ($('#cn') && s.cid) {
+        cs(s.cid);
+      } else {
+        render(true);
+      }
     }
   },
   'undo-sal': v => {
@@ -2185,6 +2343,18 @@ const A = {
   // ── Продукція в налаштуваннях ──
   gprod: () => prodPg(),
   eprod: v => prodSheet(v),
+  'del-pphoto': () => {
+    curProdPhoto = '';
+    const box = $('#prod_photo_preview');
+    if (box) {
+      box.innerHTML = `
+        <label for="prod_photo_file" class="prod-photo-upload-label">
+          ${ic('camera')}
+          <span>Додати фото</span>
+        </label>
+      `;
+    }
+  },
   sprod: v => {
     const title = ($('#pt') ? $('#pt').value : '').trim();
     if (!title) { toast('Вкажіть назву засобу', 'warn'); return; }
@@ -2194,6 +2364,7 @@ const A = {
       vol: ($('#pv') ? $('#pv').value : '').trim(),
       cost: +($('#pc') ? $('#pc').value : 0) || 0,
       price: +($('#pp') ? $('#pp').value : 0) || 0,
+      photo: curProdPhoto,
       note: ($('#pnote') ? $('#pnote').value : '').trim()
     };
     db.products = db.products || [];
@@ -2235,6 +2406,15 @@ document.addEventListener('focusin', e => {
 
 document.addEventListener('input', e => {
   if (e.target.id == 'xq') { cur.cid = ''; $('#xcw').classList.remove('ok'); cql(); return; }
+  if (e.target.id == 'xcp') {
+    const ph = e.target.value.trim();
+    const callEl = $('#xcp-call');
+    if (callEl) {
+      callEl.href = ph ? 'tel:' + nph(ph) : 'javascript:void(0)';
+      callEl.style.color = ph ? 'var(--ac2)' : 'var(--mu)';
+    }
+    return;
+  }
   if (e.target.id == 'sal-cq') { if (curSal) { curSal.cid = ''; $('#sal-cw').classList.remove('ok'); } salCql(); return; }
   if (e.target.id == 'svq') { $('#svl').innerHTML = svRows(e.target.value); return; }
   if (e.target.id == 'prod_q') { $('#prod_l').innerHTML = prodRows(e.target.value); return; }
@@ -2315,17 +2495,23 @@ document.addEventListener('change', async e => {
     return;
   }
   if (t.id == 'ff') { for (const f of t.files) cur.photos.push(await rz(f)); phs(); return; }
+  if (t.id == 'prod_photo_file') {
+    const f = t.files[0];
+    if (!f) return;
+    curProdPhoto = await rzSq(f);
+    const box = $('#prod_photo_preview');
+    if (box) {
+      box.innerHTML = `
+        <img src="${curProdPhoto}" class="prod-photo-img" alt="Фото засобу">
+        <button type="button" class="prod-photo-del" data-a="del-pphoto" aria-label="Видалити фото">${ic('x')}</button>
+      `;
+    }
+    return;
+  }
 });
 
 /* ── IMPORT CONTACTS ────────────────────────────────────────── */
 let IMP = [];
-
-const nph = p => {
-  p = (p || '').split(':::')[0].replace(/[^\d+]/g, '');
-  if (/^0\d{9}$/.test(p)) return '+38' + p;
-  if (/^380\d{9}$/.test(p)) return '+' + p;
-  return p;
-};
 
 const icnt = () => {
   const e = $('#icn');
