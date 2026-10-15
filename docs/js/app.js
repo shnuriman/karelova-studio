@@ -761,8 +761,8 @@ function apSheet(id, t0) {
     </div>
     <div class="sgl" id="xl"></div>
 
-    <div class="fld" id="xcp-wrap" style="margin-top:8px">
-      <input id="xcp" type="tel" inputmode="tel" placeholder="+380… (додати або змінити телефон)" value="${esc(clPhone)}">
+    <div class="fld" id="xcp-wrap" style="margin-top:8px${cur.cid ? '' : ';display:none'}">
+      <input id="xcp" type="tel" inputmode="tel" placeholder="+380…" value="${esc(clPhone)}">
       <a id="xcp-call" href="${clPhone ? 'tel:' + nph(clPhone) : 'javascript:void(0)'}" class="sf" style="right:12px;color:${clPhone ? 'var(--ac2)' : 'var(--mu)'};display:flex;align-items:center;height:100%;text-decoration:none" title="${clPhone ? 'Зателефонувати' : 'Телефон'}">${ic('phone')}</a>
     </div>
 
@@ -2043,7 +2043,7 @@ const A = {
     const c = db.clients.find(x => x.id == v);
     $('#xq').value = c ? c.name : cn(v);
     $('#xcw').classList.add('ok');
-    if ($('#xcp')) {
+     if ($('#xcp')) {
       const ph = c ? (c.phone || '') : '';
       $('#xcp').value = ph;
       const callEl = $('#xcp-call');
@@ -2051,6 +2051,8 @@ const A = {
         callEl.href = ph ? 'tel:' + nph(ph) : 'javascript:void(0)';
         callEl.style.color = ph ? 'var(--ac2)' : 'var(--mu)';
       }
+      const wrap = $('#xcp-wrap');
+      if (wrap) wrap.style.display = '';
     }
     $('#xl').innerHTML = '';
     $('#xq').blur();
@@ -2446,7 +2448,7 @@ document.addEventListener('focusin', e => {
 });
 
 document.addEventListener('input', e => {
-  if (e.target.id == 'xq') { cur.cid = ''; $('#xcw').classList.remove('ok'); cql(); return; }
+  if (e.target.id == 'xq') { cur.cid = ''; $('#xcw').classList.remove('ok'); const w=$('#xcp-wrap'); if(w) w.style.display='none'; cql(); return; }
   if (e.target.id == 'xcp') {
     const ph = e.target.value.trim();
     const callEl = $('#xcp-call');
