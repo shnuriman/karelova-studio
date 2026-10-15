@@ -410,6 +410,7 @@ const dirty = () => $('#sh').classList.contains('on')
 /* ── ICONS ──────────────────────────────────────────────────── */
 const P = {
   cal:     '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
+  archive: '<rect x="3" y="3" width="18" height="4" rx="1"/><path d="M5 7v13a2 2 0 002 2h10a2 2 0 002-2V7M10 12h4"/>',
   users:   '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.5 14.2c2.2.1 3.6 1.6 4 4.3"/>',
   bag:     '<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/>',
   chart:   '<path d="M5 20V11M12 20V5M19 20v-7"/>',
@@ -452,8 +453,8 @@ const closeBtn = () => `<button class="bt gh" data-a="close">${ic('x')} Закр
 /* ── TABS ───────────────────────────────────────────────────── */
 const TABS = [
   ['sch', 'cal',     'Графік'],
+  ['sal', 'bag',     'Замовлення'],
   ['cli', 'users',   'Клієнти'],
-  ['sal', 'bag',     'Продажі'],
   ['st',  'chart',   'Статистика'],
   ['set', 'sliders', 'Налаштування'],
 ];
@@ -973,47 +974,61 @@ function cs(id) {
 const pr = id => (db.products || []).find(p => p.id == id);
 
 function sal() {
-  const q = (S.sq || '').toLowerCase().trim();
-  const filter = S.salTab || 'wait';
   const allSales = (db.sales || []).slice().sort((a, b) => b.date.localeCompare(a.date));
-  const waitCount = allSales.filter(s => s.status == 'wait').length;
-
-  const filtered = allSales.filter(s => {
-    if (filter == 'wait' && s.status != 'wait') return false;
-    if (filter == 'done' && s.status != 'done') return false;
-    if (q) {
-      const cName = cn(s.cid).toLowerCase();
-      const pNames = (s.items || []).map(i => (i.title || '') + ' ' + (i.brand || '')).join(' ').toLowerCase();
-      if (!cName.includes(q) && !pNames.includes(q)) return false;
-    }
-    return true;
-  });
+  const waitSales = allSales.filter(s => s.status == 'wait');
+  const doneSales = allSales.filter(s => s.status == 'done');
 
   return `
-    <h1>Продажі
+    <h1>Замовлення
       <span>
+        <button class="ib gh" data-a="sal-arch" title="Архів замовлень" aria-label="Архів замовлень">${ic('archive')}</button>
         <button class="ib" data-a="nsal" aria-label="Нове замовлення">${ic('plus')}</button>
       </span>
     </h1>
-    <div class="pk-tabs" style="padding:0 0 12px">
-      <button type="button" class="pk-tab ${filter == 'wait' ? 'on' : ''}" data-a="saltab" data-v="wait">
-        До видачі ${waitCount ? `<span class="badge-num">${waitCount}</span>` : ''}
-      </button>
-      <button type="button" class="pk-tab ${filter == 'done' ? 'on' : ''}" data-a="saltab" data-v="done">
-        Архів виданих
-      </button>
-      <button type="button" class="pk-tab ${filter == 'all' ? 'on' : ''}" data-a="saltab" data-v="all">
-        Усі (${allSales.length})
+
+    <div class="sal-bar-row">
+      <span class="sal-bar-title">Актуальні замовлення (${waitSales.length})</span>
+      <button type="button" class="sal-arch-pill" data-a="sal-arch">
+        ${ic('archive')} Архів замовлень${doneSales.length ? ` (${doneSales.length})` : ''}
       </button>
     </div>
-    <div class="sr" style="margin-bottom:12px">
-      ${ic('search')}
-      <input data-c="sq" placeholder="Пошук за клієнтом чи товаром" value="${esc(S.sq || '')}">
-    </div>
+
     <div id="sal-list">
-      ${salListRows(filtered, filter)}
+      ${salListRows(waitSales, 'wait')}
     </div>
+
+    ${doneSales.length ? `
+      <div class="sal-arch-footer-link">
+        <button type="button" class="sal-arch-ghost-btn" data-a="sal-arch">
+          ${ic('archive')} Перейти до архіву замовлень (${doneSales.length})
+        </button>
+      </div>
+    ` : ''}
   `;
+}
+
+function salArchPg() {
+  const q = (S.salArchQ || '').toLowerCase().trim();
+  const doneSales = (db.sales || []).filter(s => s.status == 'done').sort((a, b) => b.date.localeCompare(a.date));
+  const filtered = doneSales.filter(s => {
+    if (!q) return true;
+    const cName = cn(s.cid).toLowerCase();
+    const pNames = (s.items || []).map(i => (i.title || '') + ' ' + (i.brand || '')).join(' ').toLowerCase();
+    return cName.includes(q) || pNames.includes(q);
+  });
+
+  pgOpen(`<div class="pn pg">
+    ${pgHead('Архів замовлень')}
+    <div class="pg-b">
+      <div class="sr" style="margin:10px 0 14px">
+        ${ic('search')}
+        <input id="sal_arch_q" autocomplete="off" placeholder="Пошук в архіві" value="${esc(S.salArchQ || '')}">
+      </div>
+      <div id="sal-arch-list">
+        ${salListRows(filtered, 'done')}
+      </div>
+    </div>
+  </div>`, () => render(true));
 }
 
 function salListRows(list, filter) {
@@ -1028,25 +1043,34 @@ function salListRows(list, filter) {
 
   return list.map(o => `
     <div class="cd sal-card ${o.status == 'wait' ? 'sal-wait' : 'sal-done'}">
-      <div class="sal-h" data-a="esal" data-v="${o.id}">
-        <div class="sal-main">
-          <div class="sal-cl">
-            <b>${esc(o.cid ? cn(o.cid) : 'Швидкий продаж')}</b>
-            <span class="sal-dt">${fdt(o.date)}</span>
-          </div>
-          <div class="sal-items">
-            ${(o.items || []).map(it => `<span>${esc(it.title)}${it.vol ? ' <small class="mut">(' + esc(it.vol) + ')</small>' : ''} <b>×${it.qty}</b></span>`).join(', ') || 'Без товарів'}
-          </div>
-          ${o.note ? `<small class="mut" style="display:block;margin-top:4px">${esc(o.note)}</small>` : ''}
+      <div class="sal-top-row" data-a="esal" data-v="${o.id}">
+        <div class="sal-client-info">
+          <span class="sal-cname">${esc(o.cid ? cn(o.cid) : 'Швидкий продаж')}</span>
+          <span class="sal-cdate">${fdt(o.date)}</span>
         </div>
-        <div class="sal-amt">
-          <b class="sal-tot">${money(o.total || 0)}</b>
-          <span class="sal-prf">+${money(o.profit || 0)}</span>
-        </div>
+        <div class="sal-total-price">${money(o.total || 0)}</div>
       </div>
-      <div class="sal-foot">
-        <span class="sal-tag ${o.status == 'wait' ? 'tag-wait' : 'tag-done'}">
-          ${o.status == 'wait' ? '🟡 Очікує видачі' : '✅ Видано (в архіві)'}
+
+      <div class="sal-card-items" data-a="esal" data-v="${o.id}">
+        ${(o.items && o.items.length)
+          ? o.items.map(it => `
+              <div class="sal-ci-row">
+                <span class="sal-ci-name">${esc(it.title)}</span>
+                <div class="sal-ci-right">
+                  ${it.vol ? `<span class="sal-ci-vol">${esc(it.vol)}</span>` : ''}
+                  <span class="sal-ci-qty">×${it.qty || 1}</span>
+                </div>
+              </div>
+            `).join('')
+          : '<div class="sal-ci-row"><span class="sal-ci-name mut">Без товарів</span></div>'
+        }
+      </div>
+
+      ${o.note ? `<div class="sal-card-note" data-a="esal" data-v="${o.id}">${esc(o.note)}</div>` : ''}
+
+      <div class="sal-card-footer">
+        <span class="sal-status-label ${o.status == 'wait' ? 'wait' : 'done'}">
+          ${o.status == 'wait' ? 'Очікує видачі' : 'Видано клієнту'}
         </span>
         ${o.status == 'wait' ? `
           <button type="button" class="bt-pickup" data-a="pick-sal" data-v="${o.id}">
@@ -1094,18 +1118,24 @@ function salItemsHtml() {
     return `<p class="mut" style="text-align:center;padding:12px 0">Товарів ще не додано.<br>Натисніть кнопку нижче, щоб вибрати продукцію.</p>`;
   }
   return curSal.items.map((it, idx) => `
-    <div class="sal-item-row">
-      <div class="sir-info">
-        <b>${esc(it.title)}</b>
-        <small>${it.brand ? esc(it.brand) + ' · ' : ''}${it.vol ? esc(it.vol) + ' · ' : ''}${money(it.price)} / шт</small>
+    <div class="sal-item-card">
+      <div class="sic-top">
+        <div class="sic-title">${esc(it.title)}</div>
+        <button type="button" class="sic-del" data-a="it-del" data-v="${idx}" aria-label="Видалити">${ic('x')}</button>
       </div>
-      <div class="sir-qty">
-        <button type="button" class="sir-qbtn" data-a="it-qty" data-v="${idx}|-1">−</button>
-        <span class="sir-num">${it.qty}</span>
-        <button type="button" class="sir-qbtn" data-a="it-qty" data-v="${idx}|1">+</button>
+      <div class="sic-meta">
+        ${it.brand ? `<span>${esc(it.brand)}</span>` : ''}
+        ${it.vol ? `<span class="sic-vol">${esc(it.vol)}</span>` : ''}
+        <span class="sic-unit">${money(it.price)} / шт</span>
       </div>
-      <div class="sir-price">${money(it.price * it.qty)}</div>
-      <button type="button" class="sir-del" data-a="it-del" data-v="${idx}" aria-label="Видалити">${ic('x')}</button>
+      <div class="sic-bot">
+        <div class="sic-qty">
+          <button type="button" class="sic-qbtn" data-a="it-qty" data-v="${idx}|-1">−</button>
+          <span class="sic-qnum">${it.qty}</span>
+          <button type="button" class="sic-qbtn" data-a="it-qty" data-v="${idx}|1">+</button>
+        </div>
+        <div class="sic-sum">${money(it.price * it.qty)}</div>
+      </div>
     </div>
   `).join('');
 }
@@ -1153,11 +1183,11 @@ function salOpenForm(id) {
 
       <div class="fh">${ic('flag')} Статус замовлення</div>
       <div class="sal-status-picks">
-        <button type="button" class="ssp-btn wait ${curSal.status == 'wait' ? 'on' : ''}" data-a="sal-st" data-v="wait">
-          🟡 Очікує видачі
+        <button type="button" class="ssp-btn ${curSal.status == 'wait' ? 'on' : ''}" data-a="sal-st" data-v="wait">
+          Очікує видачі
         </button>
-        <button type="button" class="ssp-btn done ${curSal.status == 'done' ? 'on' : ''}" data-a="sal-st" data-v="done">
-          ✅ Видано клієнту
+        <button type="button" class="ssp-btn ${curSal.status == 'done' ? 'on' : ''}" data-a="sal-st" data-v="done">
+          Видано клієнту
         </button>
       </div>
       <small class="mut" style="display:block;margin-top:6px">
@@ -2034,6 +2064,7 @@ const A = {
   },
 
   // ── Продажі ──
+  'sal-arch': () => salArchPg(),
   saltab: v => { S.salTab = v; render(true); },
   nsal: () => salSheet(''),
   esal: v => salSheet(v),
@@ -2052,7 +2083,11 @@ const A = {
       s.status = 'wait';
       save();
       toast('Замовлення повернуто в очікування видачі');
-      render(true);
+      if ($('#sal-arch-list')) {
+        salArchPg();
+      } else {
+        render(true);
+      }
     }
   },
   'sal-pcl': v => {
@@ -2208,21 +2243,30 @@ document.addEventListener('input', e => {
   if (e.target.dataset.c == 'q') { S.q = e.target.value; $('#cl').innerHTML = cl(); return; }
   if (e.target.dataset.c == 'sq') {
     S.sq = e.target.value;
-    const f = S.salTab || 'wait';
     const q = (S.sq || '').toLowerCase().trim();
-    const allSales = (db.sales || []).slice().sort((a, b) => b.date.localeCompare(a.date));
-    const flt = allSales.filter(s => {
-      if (f == 'wait' && s.status != 'wait') return false;
-      if (f == 'done' && s.status != 'done') return false;
-      if (q) {
-        const cName = cn(s.cid).toLowerCase();
-        const pNames = (s.items || []).map(i => (i.title || '') + ' ' + (i.brand || '')).join(' ').toLowerCase();
-        if (!cName.includes(q) && !pNames.includes(q)) return false;
-      }
-      return true;
+    const waitSales = (db.sales || []).filter(s => s.status == 'wait').sort((a, b) => b.date.localeCompare(a.date));
+    const flt = waitSales.filter(s => {
+      if (!q) return true;
+      const cName = cn(s.cid).toLowerCase();
+      const pNames = (s.items || []).map(i => (i.title || '') + ' ' + (i.brand || '')).join(' ').toLowerCase();
+      return cName.includes(q) || pNames.includes(q);
     });
     const el = $('#sal-list');
-    if (el) el.innerHTML = salListRows(flt, f);
+    if (el) el.innerHTML = salListRows(flt, 'wait');
+    return;
+  }
+  if (e.target.id == 'sal_arch_q') {
+    S.salArchQ = e.target.value;
+    const q = (S.salArchQ || '').toLowerCase().trim();
+    const doneSales = (db.sales || []).filter(s => s.status == 'done').sort((a, b) => b.date.localeCompare(a.date));
+    const flt = doneSales.filter(s => {
+      if (!q) return true;
+      const cName = cn(s.cid).toLowerCase();
+      const pNames = (s.items || []).map(i => (i.title || '') + ' ' + (i.brand || '')).join(' ').toLowerCase();
+      return cName.includes(q) || pNames.includes(q);
+    });
+    const el = $('#sal-arch-list');
+    if (el) el.innerHTML = salListRows(flt, 'done');
     return;
   }
   if (['pc', 'pp'].includes(e.target.id)) {
