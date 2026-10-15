@@ -1038,29 +1038,46 @@ function cs(id) {
 
       <div class="cl-history-block" style="margin-top:14px">
         <div class="cl-sec-head">
-          <span class="cl-sec-title">Придбана продукція ${clDone.length ? `(${clDone.length})` : ''}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="cl-sec-title">Придбана продукція ${clDone.length ? `(${clDone.length})` : ''}</span>
+            ${prodSpent ? `<span class="cl-sec-sum">${money(prodSpent)}</span>` : ''}
+          </div>
           <button type="button" class="bt-add-sal-sm" data-a="nsal-cl" data-v="${id}">
             ${ic('plus')} Додати продаж
           </button>
         </div>
         ${clDone.length ? `
-          <div class="cd cl-hist-box">
-            <div class="hist-list">
-              ${clDone.map(s => `
-                <div class="hv" data-a="esal" data-v="${s.id}">
-                  <div class="hv-d">${fdt(s.date)} <i>видано</i></div>
-                  <div class="hv-s">${esc((s.items || []).map(i => i.title + (i.vol ? ' (' + i.vol + ')' : '') + ' ×' + i.qty).join(', '))}</div>
-                  <div class="hv-p">${money(s.total)}</div>
+          <div class="cl-sales-list">
+            ${clDone.map(s => `
+              <div class="cd sal-card" data-a="esal" data-v="${s.id}" style="margin-bottom:10px;cursor:pointer">
+                <div class="sal-top-row">
+                  <div class="sal-client-info">
+                    <span class="sal-cname">${fdt(s.date)}</span>
+                    <span class="sal-status-label done">Видано</span>
+                  </div>
+                  <div class="sal-total-price">${money(s.total)}</div>
                 </div>
-              `).join('')}
-            </div>
+                <div class="sal-card-items">
+                  ${(s.items || []).map(it => `
+                    <div class="sal-ci-row">
+                      <span class="sal-ci-name">${esc(it.title)}</span>
+                      <div class="sal-ci-right">
+                        ${it.vol ? `<span class="sal-ci-vol">${esc(it.vol)}</span>` : ''}
+                        <span class="sal-ci-qty">×${it.qty || 1}</span>
+                      </div>
+                    </div>
+                  `).join('')}
+                </div>
+                ${s.note ? `<div class="sal-card-note">${esc(s.note)}</div>` : ''}
+              </div>
+            `).join('')}
           </div>
         ` : `
           <div class="cl-empty-box">Куплених засобів ще немає</div>
         `}
       </div>
     ` : ''}
-    <div class="row" style="margin-top:18px">
+    <div class="row" style="margin-top:22px;padding-bottom:14px">
       ${closeBtn()}
       <button class="bt" data-a="sc" data-v="${id || ''}">${ic('check')} Зберегти</button>
     </div>
@@ -1816,7 +1833,6 @@ function prodSheet(id) {
           `}
         </div>
         <input type="file" id="prod_photo_file" accept="image/*" style="display:none">
-        <small class="mut">Квадратне фото для каталогу</small>
       </div>
 
       <div class="fh first">${ic('bag')} Назва продукції</div>
