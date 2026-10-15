@@ -2041,6 +2041,25 @@ body, #v, .cd, .ap, .stl, .sti, .nav, .pn, input, select, textarea, .ib, .bt.gh,
   color: var(--mu);
   letter-spacing: -.01em;
 }
+.sal-new-btn {
+  width: 100%;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+.sal-empty-msg {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  color: var(--mu);
+  font-size: 15px;
+  white-space: nowrap;
+  pointer-events: none;
+}
 .sal-arch-pill {
   display: inline-flex;
   align-items: center;

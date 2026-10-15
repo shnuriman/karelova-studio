@@ -1113,13 +1113,14 @@ function sal() {
     <h1>Замовлення
       <span>
         <button class="ib gh" data-a="sal-arch" title="Архів замовлень" aria-label="Архів замовлень">${ic('archive')}</button>
-        <button class="ib" data-a="nsal" aria-label="Нове замовлення">${ic('plus')}</button>
       </span>
     </h1>
 
     <div class="sal-bar-row">
       <span class="sal-bar-title">Актуальні замовлення (${waitSales.length})</span>
     </div>
+
+    <button class="bt sal-new-btn" data-a="nsal">${ic('plus')} Нове замовлення</button>
 
     <div id="sal-list">
       ${salListRows(waitSales, 'wait')}
@@ -1154,11 +1155,11 @@ function salArchPg() {
 function salListRows(list, filter) {
   if (!list.length) {
     const msg = filter == 'wait'
-      ? 'Немає замовлень, що очікують видачі.<br>Натисніть «+», щоб створити нове.'
+      ? 'Замовлень поки немає'
       : filter == 'done'
       ? 'Архів виданих замовлень порожній.'
-      : 'Продажів ще немає. Натисніть «+», щоб додати перше замовлення.';
-    return `<p class="mut" style="text-align:center;margin-top:28px">${msg}</p>`;
+      : 'Продажів ще немає.';
+    return `<p class="mut sal-empty-msg">${msg}</p>`;
   }
 
   return list.map(o => `
