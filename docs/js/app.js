@@ -46,10 +46,14 @@ if (!db) {
     clients: [],
     appts: [],
     expenses: [],
+    products: [],
+    sales: [],
     sched: { step: 30, days: d },
   };
   save();
 }
+db.products = db.products || [];
+db.sales = db.sales || [];
 
 // Прапорці одноразових міграцій живуть у самих даних (db.mig), а не в localStorage пристрою.
 // Інакше кожен новий девайс "скидав" і перезаповнював дані на сервері.
@@ -71,9 +75,26 @@ try {
     db.clients = [];
     db.services = [];
     db.expenses = [];
+    db.products = [];
+    db.sales = [];
     if (db.sched && db.sched.over) db.sched.over = {};
     migSet('reset');
     save();
+  }
+} catch (e) {}
+
+// Одноразове заповнення каталогу продукції (стартові позиції догляду)
+try {
+  if (!migDone('products_v1')) {
+    if (!db.products.length) {
+      db.products = [
+        { id: uid(), title: 'Крем для стоп з сечовиною 10%', brand: 'Baehr', vol: '100 мл', cost: 320, price: 550, note: 'Для сухої шкіри стоп' },
+        { id: uid(), title: 'Олія монарди для нігтів та кутикули', brand: 'Podopharm', vol: '30 мл', cost: 280, price: 480, note: 'Антибактеріальний та відновлювальний догляд' },
+        { id: uid(), title: 'Спрей-дезодорант для ніг', brand: 'SUDA Care', vol: '150 мл', cost: 360, price: 620, note: 'Зниження пітливості та захист' },
+      ];
+      save();
+    }
+    migSet('products_v1');
   }
 } catch (e) {}
 
@@ -350,9 +371,12 @@ const S = {
   m:   new Date(now.getFullYear(), now.getMonth(), 1),
   sm:  new Date(now.getFullYear(), now.getMonth(), 1),
   q:   '',
+  sq:  '',
+  salTab: 'wait',
   mx:  {},
 };
 let cur;
+let curSal;
 let lastDayTap = { id: '', t: 0 };
 
 const cn = id => (db.clients.find(c => c.id == id) || { name: '—' }).name;
@@ -375,18 +399,19 @@ const sheet = (h, page) => {
 const sig = () => {
   const f = [...document.querySelectorAll('#sh input, #sh select, #sh textarea')]
     .filter(x => x.type != 'file').map(x => x.type == 'checkbox' ? x.checked : x.value);
-  return JSON.stringify([f, $('#xq') && cur ? [cur.cid, cur.svc] : 0]);
+  return JSON.stringify([f, $('#xq') && cur ? [cur.cid, cur.svc] : 0, curSal ? [curSal.cid, curSal.items] : 0]);
 };
 // шторка з кнопкою «Зберегти» — тоді є що втрачати
 const dirty = () => $('#sh').classList.contains('on')
   && (S.pgDirty
     ? S.pgDirty()
-    : !!$('#sh [data-a=sa], #sh [data-a=sc], #sh [data-a=se], #sh [data-a=sv], #sh [data-a=sbrk]') && S.snap !== sig());
+    : !!$('#sh [data-a=sa], #sh [data-a=sc], #sh [data-a=se], #sh [data-a=sv], #sh [data-a=sbrk], #sh [data-a=ssal], #sh [data-a=sprod]') && S.snap !== sig());
 
 /* ── ICONS ──────────────────────────────────────────────────── */
 const P = {
   cal:     '<rect x="3.5" y="5" width="17" height="15.5" rx="3"/><path d="M3.5 10h17M8 3v4M16 3v4"/>',
   users:   '<circle cx="9" cy="8.5" r="3.2"/><path d="M3.5 19c.6-3.2 2.8-5 5.5-5s4.9 1.8 5.5 5"/><circle cx="17" cy="9.5" r="2.4"/><path d="M16.5 14.2c2.2.1 3.6 1.6 4 4.3"/>',
+  bag:     '<path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4zM3 6h18M16 10a4 4 0 01-8 0"/>',
   chart:   '<path d="M5 20V11M12 20V5M19 20v-7"/>',
   sliders: '<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>',
   imp:     '<rect x="4" y="3.5" width="16" height="17" rx="3"/><circle cx="12" cy="10" r="2.6"/><path d="M7.5 17c.7-2.2 2.4-3.3 4.5-3.3s3.8 1.1 4.5 3.3"/>',
@@ -428,6 +453,7 @@ const closeBtn = () => `<button class="bt gh" data-a="close">${ic('x')} Закр
 const TABS = [
   ['sch', 'cal',     'Графік'],
   ['cli', 'users',   'Клієнти'],
+  ['sal', 'bag',     'Продажі'],
   ['st',  'chart',   'Статистика'],
   ['set', 'sliders', 'Налаштування'],
 ];
@@ -440,9 +466,10 @@ function render(soft) {
 
   const paint = function() {
     const top = el.scrollTop;
-    el.innerHTML = ({ sch, cli, st, set })[S.tab]();
+    el.innerHTML = ({ sch, cli, sal, st, set })[S.tab]();
     if (S.last !== S.tab) { el.scrollTop = 0; S.last = S.tab; } else el.scrollTop = top;
     nv.style.setProperty('--i', idx);
+    nv.style.setProperty('--tab-cnt', TABS.length);
     nv.innerHTML = TABS.map(t =>
       `<div role="button" tabindex="0" title="${t[2]}" aria-label="${t[2]}"
             class="${S.tab == t[0] ? 'on' : ''}" data-a="tab" data-v="${t[0]}">${ic(t[1])}</div>`
@@ -685,6 +712,7 @@ function apSheet(id, t0) {
   cur = JSON.parse(JSON.stringify(a));
   cur.svc = cur.svc || [];
   if (!id && cur.status == 'plan' && isPast(cur)) cur.status = 'done';
+  const clWait = cur.cid ? (db.sales || []).filter(s => s.cid == cur.cid && s.status == 'wait') : [];
   sheet(`<div class="pn pg">
     <div class="pg-h">
       <button type="button" class="ib pg-back" data-a="close" aria-label="Назад">${ic('prev')}</button>
@@ -700,6 +728,23 @@ function apSheet(id, t0) {
     </div>
     <div class="sgl" id="xl"></div>
 
+    ${clWait.length ? `
+      <div class="sal-client-alert">
+        <div class="sca-h">${ic('bag')} У клієнта є замовлення, що очікує видачі:</div>
+        ${clWait.map(s => `
+          <div class="sca-row">
+            <div>
+              <span>${esc((s.items || []).map(i => i.title + ' ×' + i.qty).join(', '))}</span>
+              <small>${fdt(s.date)} · ${money(s.total)}</small>
+            </div>
+            <button type="button" class="bt-pickup-sm" data-a="pick-sal" data-v="${s.id}">
+              ${ic('check')} Віддати
+            </button>
+          </div>
+        `).join('')}
+      </div>
+    ` : ''}
+
     <div class="fh">${ic('clock')} Дата та час запису</div>
     <label>Дата</label>
     ${fld(`<input id="xdt" type="date" value="${cur.date}">`, 'cal')}
@@ -712,7 +757,10 @@ function apSheet(id, t0) {
 
     <div class="fh">${ic('file')} Послуги</div>
     <div id="xsv">${svHtml()}</div>
-    <button type="button" class="bt gh" data-a="tsp">${ic('plus')} Додати послугу</button>
+    <div class="row" style="gap:8px">
+      <button type="button" class="bt gh" data-a="tsp" style="flex:1">${ic('plus')} Додати послугу</button>
+      <button type="button" class="bt gh" data-a="nsal-ap" style="flex:1">${ic('bag')} Продати догляд</button>
+    </div>
 
     <div class="fh">${ic('cash')} Ціна</div>
     <div class="fld"><input id="xp" type="number" inputmode="decimal" min="0" value="${cur.price}"><em class="sf">₴</em></div>
@@ -748,6 +796,10 @@ function actSheet(t0) {
         <button type="button" class="act-b act-pri" data-a="act-ap" data-v="${t0 || ''}">
           <span class="act-ico">${ic('plus')}</span>
           <span>Створити новий запис</span>
+        </button>
+        <button type="button" class="act-b act-sec" data-a="act-sal" data-v="${S.d}">
+          <span class="act-ico">${ic('bag')}</span>
+          <span>Продати продукцію</span>
         </button>
         <button type="button" class="act-b act-sec" data-a="act-brk" data-v="${t0 || ''}">
           <span class="act-ico">${ic('cal')}</span>
@@ -855,6 +907,12 @@ function cs(id) {
     : { name: '', phone: '', ig: '', note: '' };
   const h = db.appts.filter(a => a.cid == id).sort((a, b) => b.date.localeCompare(a.date));
   const spent = h.filter(a => a.status == 'done').reduce((s, a) => s + a.price, 0);
+  const clSales = id ? (db.sales || []).filter(s => s.cid == id).sort((a, b) => b.date.localeCompare(a.date)) : [];
+  const clWait = clSales.filter(s => s.status == 'wait');
+  const clDone = clSales.filter(s => s.status == 'done');
+  const prodSpent = clDone.reduce((s, o) => s + (o.total || 0), 0);
+  const totalSpent = spent + prodSpent;
+
   sheet(`
     ${shHead(id ? '' : 'Новий клієнт', id ? 'dc' : '', id)}
     <label>Ім\u2019я*</label>
@@ -869,14 +927,40 @@ function cs(id) {
     ${id ? `
       <div class="cd hist">
         <div class="hist-top">
-          <div><small>Витрачено</small><b>${money(spent)}</b></div>
-          <div class="r"><small>Візитів</small><b>${h.length}</b></div>
+          <div><small>Всього сплачено</small><b>${money(totalSpent)}</b></div>
+          <div class="r"><small>Візитів / Покупок</small><b>${h.length} / ${clDone.length}</b></div>
         </div>
+        ${clWait.length ? `
+          <div class="sal-client-alert">
+            <div class="sca-h">${ic('bag')} Очікує видачі (${clWait.length}):</div>
+            ${clWait.map(s => `
+              <div class="sca-row">
+                <div>
+                  <span>${esc((s.items || []).map(i => i.title + ' ×' + i.qty).join(', '))}</span>
+                  <small>${fdt(s.date)} · ${money(s.total)}</small>
+                </div>
+                <button type="button" class="bt-pickup-sm" data-a="pick-sal" data-v="${s.id}">
+                  ${ic('check')} Віддати
+                </button>
+              </div>
+            `).join('')}
+          </div>
+        ` : ''}
+        ${secH('Візити', h.length ? money(spent) : '')}
         ${h.length ? `<div class="hist-list">${h.map(a => `<div class="hv st-${a.status}" data-a="edit" data-v="${a.id}">
           <div class="hv-d">${fdt(a.date)}${a.status == 'plan' ? '<i>заплановано</i>' : a.status == 'canc' ? '<i>скасовано</i>' : ''}</div>
           <div class="hv-s">${esc(svTitle(a))}</div>
           <div class="hv-p">${money(a.price)}</div>
-        </div>`).join('')}</div>` : '<p class="mut" style="margin:12px 0 0">Ще немає візитів</p>'}
+        </div>`).join('')}</div>` : '<p class="mut" style="margin:8px 0 0">Ще немає візитів</p>'}
+        ${secH('Придбана продукція', clDone.length ? money(prodSpent) : '')}
+        ${clDone.length ? `<div class="hist-list">${clDone.map(s => `
+          <div class="hv" data-a="esal" data-v="${s.id}">
+            <div class="hv-d">${fdt(s.date)} <i>видано</i></div>
+            <div class="hv-s">${esc((s.items || []).map(i => i.title + (i.vol ? ' (' + i.vol + ')' : '') + ' ×' + i.qty).join(', '))}</div>
+            <div class="hv-p">${money(s.total)}</div>
+          </div>
+        `).join('')}</div>` : '<p class="mut" style="margin:8px 0 0">Куплених засобів ще немає</p>'}
+        <button type="button" class="bt gh" data-a="nsal-cl" data-v="${id}" style="margin-top:14px">${ic('plus')} Додати замовлення клієнту</button>
       </div>` : ''}
     <div class="row" style="margin-top:16px">
       ${closeBtn()}
@@ -885,12 +969,294 @@ function cs(id) {
   `);
 }
 
+/* ── SALES TAB ────────────────────────────────────────────── */
+const pr = id => (db.products || []).find(p => p.id == id);
+
+function sal() {
+  const q = (S.sq || '').toLowerCase().trim();
+  const filter = S.salTab || 'wait';
+  const allSales = (db.sales || []).slice().sort((a, b) => b.date.localeCompare(a.date));
+  const waitCount = allSales.filter(s => s.status == 'wait').length;
+
+  const filtered = allSales.filter(s => {
+    if (filter == 'wait' && s.status != 'wait') return false;
+    if (filter == 'done' && s.status != 'done') return false;
+    if (q) {
+      const cName = cn(s.cid).toLowerCase();
+      const pNames = (s.items || []).map(i => (i.title || '') + ' ' + (i.brand || '')).join(' ').toLowerCase();
+      if (!cName.includes(q) && !pNames.includes(q)) return false;
+    }
+    return true;
+  });
+
+  return `
+    <h1>Продажі
+      <span>
+        <button class="ib" data-a="nsal" aria-label="Нове замовлення">${ic('plus')}</button>
+      </span>
+    </h1>
+    <div class="pk-tabs" style="padding:0 0 12px">
+      <button type="button" class="pk-tab ${filter == 'wait' ? 'on' : ''}" data-a="saltab" data-v="wait">
+        До видачі ${waitCount ? `<span class="badge-num">${waitCount}</span>` : ''}
+      </button>
+      <button type="button" class="pk-tab ${filter == 'done' ? 'on' : ''}" data-a="saltab" data-v="done">
+        Архів виданих
+      </button>
+      <button type="button" class="pk-tab ${filter == 'all' ? 'on' : ''}" data-a="saltab" data-v="all">
+        Усі (${allSales.length})
+      </button>
+    </div>
+    <div class="sr" style="margin-bottom:12px">
+      ${ic('search')}
+      <input data-c="sq" placeholder="Пошук за клієнтом чи товаром" value="${esc(S.sq || '')}">
+    </div>
+    <div id="sal-list">
+      ${salListRows(filtered, filter)}
+    </div>
+  `;
+}
+
+function salListRows(list, filter) {
+  if (!list.length) {
+    const msg = filter == 'wait'
+      ? 'Немає замовлень, що очікують видачі.<br>Натисніть «+», щоб створити нове.'
+      : filter == 'done'
+      ? 'Архів виданих замовлень порожній.'
+      : 'Продажів ще немає. Натисніть «+», щоб додати перше замовлення.';
+    return `<p class="mut" style="text-align:center;margin-top:28px">${msg}</p>`;
+  }
+
+  return list.map(o => `
+    <div class="cd sal-card ${o.status == 'wait' ? 'sal-wait' : 'sal-done'}">
+      <div class="sal-h" data-a="esal" data-v="${o.id}">
+        <div class="sal-main">
+          <div class="sal-cl">
+            <b>${esc(o.cid ? cn(o.cid) : 'Швидкий продаж')}</b>
+            <span class="sal-dt">${fdt(o.date)}</span>
+          </div>
+          <div class="sal-items">
+            ${(o.items || []).map(it => `<span>${esc(it.title)}${it.vol ? ' <small class="mut">(' + esc(it.vol) + ')</small>' : ''} <b>×${it.qty}</b></span>`).join(', ') || 'Без товарів'}
+          </div>
+          ${o.note ? `<small class="mut" style="display:block;margin-top:4px">${esc(o.note)}</small>` : ''}
+        </div>
+        <div class="sal-amt">
+          <b class="sal-tot">${money(o.total || 0)}</b>
+          <span class="sal-prf">+${money(o.profit || 0)}</span>
+        </div>
+      </div>
+      <div class="sal-foot">
+        <span class="sal-tag ${o.status == 'wait' ? 'tag-wait' : 'tag-done'}">
+          ${o.status == 'wait' ? '🟡 Очікує видачі' : '✅ Видано (в архіві)'}
+        </span>
+        ${o.status == 'wait' ? `
+          <button type="button" class="bt-pickup" data-a="pick-sal" data-v="${o.id}">
+            ${ic('check')} Клієнт забрав
+          </button>
+        ` : `
+          <button type="button" class="bt-undo" data-a="undo-sal" data-v="${o.id}" title="Повернути в очікування">
+            ${ic('prev')} В очікування
+          </button>
+        `}
+      </div>
+    </div>
+  `).join('');
+}
+
+function salCalc() {
+  if (!curSal) return;
+  curSal.items = curSal.items || [];
+  curSal.total = curSal.items.reduce((s, it) => s + ((+it.price || 0) * (+it.qty || 1)), 0);
+  curSal.costTotal = curSal.items.reduce((s, it) => s + ((+it.cost || 0) * (+it.qty || 1)), 0);
+  curSal.profit = curSal.total - curSal.costTotal;
+}
+
+function salSheet(id, presetCid, presetDate) {
+  const o = id
+    ? db.sales.find(x => x.id == id)
+    : {
+        id: '',
+        date: presetDate || S.d || iso(new Date()),
+        cid: presetCid || '',
+        items: [],
+        total: 0,
+        costTotal: 0,
+        profit: 0,
+        status: 'wait',
+        note: ''
+      };
+  curSal = JSON.parse(JSON.stringify(o));
+  salCalc();
+  salOpenForm(id);
+}
+
+function salItemsHtml() {
+  if (!curSal.items.length) {
+    return `<p class="mut" style="text-align:center;padding:12px 0">Товарів ще не додано.<br>Натисніть кнопку нижче, щоб вибрати продукцію.</p>`;
+  }
+  return curSal.items.map((it, idx) => `
+    <div class="sal-item-row">
+      <div class="sir-info">
+        <b>${esc(it.title)}</b>
+        <small>${it.brand ? esc(it.brand) + ' · ' : ''}${it.vol ? esc(it.vol) + ' · ' : ''}${money(it.price)} / шт</small>
+      </div>
+      <div class="sir-qty">
+        <button type="button" class="sir-qbtn" data-a="it-qty" data-v="${idx}|-1">−</button>
+        <span class="sir-num">${it.qty}</span>
+        <button type="button" class="sir-qbtn" data-a="it-qty" data-v="${idx}|1">+</button>
+      </div>
+      <div class="sir-price">${money(it.price * it.qty)}</div>
+      <button type="button" class="sir-del" data-a="it-del" data-v="${idx}" aria-label="Видалити">${ic('x')}</button>
+    </div>
+  `).join('');
+}
+
+function salSummaryHtml() {
+  return `
+    <div class="sal-summary-card">
+      <div class="ssc-row">
+        <span>Сума продажу (виручка)</span>
+        <b>${money(curSal.total)}</b>
+      </div>
+      <div class="ssc-row" style="margin-top:4px">
+        <span>Собівартість закупки</span>
+        <b>${money(curSal.costTotal)}</b>
+      </div>
+      <div class="ssc-row ssc-main">
+        <span>Ваш чистий заробіток</span>
+        <b>+${money(curSal.profit)}</b>
+      </div>
+    </div>
+  `;
+}
+
+function salOpenForm(id) {
+  sheet(`<div class="pn pg">
+    <div class="pg-h">
+      <button type="button" class="ib pg-back" data-a="close" aria-label="Назад">${ic('prev')}</button>
+      <h3>${id ? 'Замовлення' : 'Нове замовлення'}</h3>
+      ${id ? `<button type="button" class="ib dl" data-a="dsal" data-v="${id}" aria-label="Видалити" title="Видалити">${ic('trash')}</button>` : ''}
+    </div>
+    <div class="pg-b">
+      <div class="fh first">${ic('users')} Клієнт</div>
+      <div class="fld ${curSal.cid ? 'ok' : ''}" id="sal-cw">
+        <input id="sal-cq" autocomplete="off" autocorrect="off" placeholder="Ім’я клієнта (або залиште порожнім для швидкого продажу)" value="${esc(curSal.cid ? cn(curSal.cid) : '')}">
+        <span class="ck">${ic('check')}</span>
+      </div>
+      <div class="sgl" id="sal-cl-list"></div>
+
+      <div class="fh">${ic('cal')} Дата замовлення</div>
+      ${fld(`<input id="sal-dt" type="date" value="${curSal.date}">`, 'cal')}
+
+      <div class="fh">${ic('bag')} Продукція</div>
+      <div id="sal-items-wrap">${salItemsHtml()}</div>
+      <button type="button" class="bt gh" data-a="pk-prod" style="margin-top:8px">${ic('plus')} Додати засіб</button>
+
+      <div class="fh">${ic('flag')} Статус замовлення</div>
+      <div class="sal-status-picks">
+        <button type="button" class="ssp-btn wait ${curSal.status == 'wait' ? 'on' : ''}" data-a="sal-st" data-v="wait">
+          🟡 Очікує видачі
+        </button>
+        <button type="button" class="ssp-btn done ${curSal.status == 'done' ? 'on' : ''}" data-a="sal-st" data-v="done">
+          ✅ Видано клієнту
+        </button>
+      </div>
+      <small class="mut" style="display:block;margin-top:6px">
+        ${curSal.status == 'wait' ? 'Замовлення висітиме у вкладці «До видачі», доки клієнт не забере' : 'Замовлення одразу буде збережено в архіві виданих'}
+      </small>
+
+      <div id="sal-sum-wrap">${salSummaryHtml()}</div>
+
+      <div class="fh">${ic('msg')} Примітка / Коментар</div>
+      <textarea id="sal-note" placeholder="Оплачено на картку / Забере через тиждень...">${esc(curSal.note || '')}</textarea>
+    </div>
+    <div class="pg-f">
+      <button type="button" class="bt" data-a="ssal">${ic('check')} Зберегти замовлення</button>
+    </div>
+  </div>`, true);
+}
+
+function salCql() {
+  const el = $('#sal-cl-list');
+  if (!el) return;
+  const q = curSal.cid ? '' : ($('#sal-cq') ? $('#sal-cq').value.trim() : '');
+  const ql = q.toLowerCase(), qd = ql.replace(/\D/g, '');
+  const m = db.clients
+    .filter(c => !ql || c.name.toLowerCase().includes(ql) || (qd && (c.phone || '').replace(/\D/g, '').includes(qd)))
+    .sort((x, y) => x.name.localeCompare(y.name)).slice(0, 30);
+  const exact = db.clients.some(c => c.name.trim().toLowerCase() == ql);
+
+  el.innerHTML =
+    (q && !exact ? `<div class="sg add" data-a="sal-acl"><span><em>+</em> Додати <b>${esc(q)}</b> як нового клієнта</span></div>` : '') +
+    m.map(c => `<div class="sg" data-a="sal-pcl" data-v="${c.id}"><b>${esc(c.name)}</b><small>${esc(c.phone || '')}</small></div>`).join('') +
+    (!q ? `<div class="sg" data-a="sal-nocl"><small class="mut">Швидкий продаж без прив'язки до клієнта</small></div>` : '');
+}
+
+function pkProdRows(q) {
+  q = (q || '').toLowerCase().trim();
+  const prods = (db.products || []).filter(p => !q || p.title.toLowerCase().includes(q) || (p.brand || '').toLowerCase().includes(q));
+  if (!prods.length) {
+    return `
+      <p class="mut" style="text-align:center;padding:20px 0">
+        ${q ? 'Нічого не знайдено' : 'У каталозі ще немає продукції.'}
+      </p>
+      <button type="button" class="bt" data-a="eprod" data-v="" style="margin-top:10px">
+        ${ic('plus')} Додати новий засіб у каталог
+      </button>
+    `;
+  }
+
+  return prods.map(p => `
+    <div class="scd pr" data-a="add-it" data-v="${p.id}" style="cursor:pointer;margin-bottom:8px">
+      <b>${esc(p.title)}</b>
+      <small>
+        ${p.brand ? esc(p.brand) + ' · ' : ''}${p.vol ? esc(p.vol) + ' · ' : ''}
+        <b>${money(p.price)}</b> · Закупка: ${money(p.cost)} · <span class="pl">+${money(p.price - p.cost)}</span>
+      </small>
+    </div>
+  `).join('');
+}
+
+function pkProdOpen() {
+  pgOpen(`<div class="pn pg">
+    ${pgHead('Оберіть продукцію', `<button type="button" class="ib" data-a="eprod" data-v="" aria-label="Новий товар">${ic('plus')}</button>`)}
+    <div class="pg-b">
+      <div class="sr" style="margin:10px 0 10px">${ic('search')}<input id="pk_prod_q" autocomplete="off" placeholder="Пошук за назвою або брендом"></div>
+      <div id="pk_prod_l">${pkProdRows('')}</div>
+    </div>
+  </div>`, () => salOpenForm(curSal.id));
+}
+
+const salMoRows = list => list.length
+  ? list.map(s => `
+      <div class="ar" data-a="esal" data-v="${s.id}">
+        <span class="dt pr"><b>${+s.date.slice(8)}</b><small>чек</small></span>
+        <span class="t">
+          <b>${esc(s.cid ? cn(s.cid) : 'Швидкий продаж')}</b>
+          <small>${esc((s.items || []).map(i => i.title + ' ×' + i.qty).join(', '))}</small>
+        </span>
+        <span class="rt">
+          <em class="pl">+${money(s.profit || 0)}</em>
+          <small class="mut">${money(s.total || 0)}</small>
+        </span>
+      </div>`).join('')
+  : '<p class="mut" style="margin:0">Продажів немає.</p>';
+
 /* ── STATISTICS TAB ─────────────────────────────────────────── */
 const mkey = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
 
-function sum(done, ex) {
-  const inc = done.reduce((s, a) => s + a.price, 0);
+function sum(done, ex, sales) {
+  sales = sales || db.sales || [];
+  const svcInc = done.reduce((s, a) => s + a.price, 0);
   const out = ex.reduce((s, e) => s + e.amount, 0);
+
+  const salesDone = sales.filter(s => s.status == 'done');
+  const salesInc = salesDone.reduce((s, o) => s + (o.total || 0), 0);
+  const salesCost = salesDone.reduce((s, o) => s + (o.costTotal || 0), 0);
+  const salesProfit = salesInc - salesCost;
+
+  const inc = svcInc + salesInc;
+  const net = (svcInc - out) + salesProfit;
+
   const cat = { Подологія: 0, Шугаринг: 0 };
   const wk = {};
   const add = (key, title, c, amt) => {
@@ -905,12 +1271,20 @@ function sum(done, ex) {
     ss.forEach(s => add(s.id, s.title, s.cat, t ? a.price * s.price / t : a.price / ss.length));
   });
   const works = Object.values(wk).sort((x, y) => y.amt - x.amt || y.n - x.n);
-  return { done, ex, inc, out, net: inc - out, cat, works, cl: new Set(done.map(a => a.cid)).size };
+
+  return {
+    done, ex, sales, salesDone,
+    svcInc, salesInc, salesCost, salesProfit,
+    inc, out, net,
+    cat, works,
+    cl: new Set([...done.map(a => a.cid), ...salesDone.map(s => s.cid)].filter(Boolean)).size
+  };
 }
 
 const mstat = k => sum(
   db.appts.filter(a => a.status == 'done' && a.type != 'break' && a.date.startsWith(k)),
-  db.expenses.filter(e => e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date))
+  db.expenses.filter(e => e.date.startsWith(k)).sort((a, b) => b.date.localeCompare(a.date)),
+  (db.sales || []).filter(s => s.date.startsWith(k))
 );
 
 const catBars = cat => {
@@ -968,7 +1342,7 @@ const exRows = ex => ex.length
   : '<p class="mut" style="margin:0">Витрат немає.</p>';
 
 function st() {
-  const all = sum(db.appts.filter(a => a.status == 'done' && a.type != 'break'), db.expenses);
+  const all = sum(db.appts.filter(a => a.status == 'done' && a.type != 'break'), db.expenses, db.sales);
   const cur = mkey(new Date());
   const pd = new Date(); pd.setDate(1); pd.setMonth(pd.getMonth() - 1);
   const prev = mkey(pd);
@@ -977,6 +1351,7 @@ function st() {
   const keys = new Set([cur]);
   db.appts.forEach(a => { if (a.status == 'done' && a.type != 'break') keys.add(a.date.slice(0, 7)); });
   db.expenses.forEach(e => keys.add(e.date.slice(0, 7)));
+  (db.sales || []).forEach(s => { if (s.status == 'done') keys.add(s.date.slice(0, 7)); });
   const list = [...keys].filter(k => /^\d{4}-\d{2}$/.test(k)).sort().reverse();
 
   const item = k => {
@@ -994,13 +1369,17 @@ function st() {
       </div>
       <div class="mo-b"><div><div class="in">
         <div class="mk">
-          <div><small>Дохід</small><b class="inc">${money(m.inc)}</b></div>
-          <div><small>Витрати</small><b class="exp">${money(m.out)}</b></div>
-          <div><small>Клієнтів</small><b>${m.cl}</b></div>
-          <div><small>Записів</small><b>${m.done.length}</b></div>
+          <div><small>Послуги</small><b class="inc">${money(m.svcInc)}</b></div>
+          <div><small>Продажі (чистий)</small><b style="color:var(--done-tx)">+${money(m.salesProfit)}</b></div>
+          <div><small>Витрати кабінету</small><b class="exp">${money(m.out)}</b></div>
+          <div><small>Чистий прибуток</small><b class="${m.net < 0 ? 'neg' : ''}">${money(m.net)}</b></div>
         </div>
         ${secH('Прийоми', m.done.length, true)}
         ${apRows(m.done)}
+        ${m.salesDone.length ? `
+          ${secH('Продана продукція', m.salesDone.length + ' чек. · +' + money(m.salesProfit))}
+          ${salMoRows(m.salesDone)}
+        ` : ''}
         ${secH('Виконані роботи')}
         ${workList(m.works)}
         ${secH('Витрати', m.ex.length ? '−' + money(m.out) : '')}
@@ -1017,13 +1396,13 @@ function st() {
       <b class="big ${all.net < 0 ? 'neg' : ''}">${money(all.net)}</b>
     </div>
     <div class="kp">
-      <div class="cd inc-c"><small class="mut">Дохід</small><b class="inc">${money(all.inc)}</b></div>
+      <div class="cd inc-c"><small class="mut">Послуги</small><b class="inc">${money(all.svcInc)}</b></div>
+      <div class="cd" style="border-left:3px solid var(--pr2)"><small class="mut">Заробіток з продажів</small><b style="color:var(--done-tx)">+${money(all.salesProfit)}</b></div>
       <div class="cd exp-c"><small class="mut">Витрати</small><b class="exp">${money(all.out)}</b></div>
       <div class="cd"><small class="mut">Клієнтів</small><b>${all.cl}</b></div>
-      <div class="cd"><small class="mut">Завершених записів</small><b>${all.done.length}</b></div>
     </div>
     <div class="cd" style="margin-top:10px">
-      <b>Дохід за напрямками</b>
+      <b>Дохід за напрямками послуг</b>
       ${catBars(all.cat)}
     </div>
     <button class="bt" data-a="es" data-v="">${ic('plus')} Додати витрату</button>
@@ -1101,6 +1480,7 @@ function applyTheme(light, showMsg = true) {
 
 function set() {
   const n = db.services.length;
+  const np = (db.products || []).length;
   const anyDay = DN.some((_, i) => db.sched.days[i + 1].on);
   const isLight = document.documentElement.getAttribute('data-theme') === 'light';
   return `
@@ -1115,6 +1495,7 @@ function set() {
     <div class="stl">
       ${stRow('cal', 't1', 'Графік роботи', schSum(), anyDay ? 'ok' : 'warn', 'gsch')}
       ${stRow('list', 't2', 'Послуги', n ? n + ' ' + plu(n, 'послуга', 'послуги', 'послуг') : 'Ще не додано', n ? 'ok' : 'warn', 'gsvc')}
+      ${stRow('bag', 't-prod', 'Продукція', np ? np + ' ' + plu(np, 'товар', 'товари', 'товарів') : 'Ще не додано', np ? 'ok' : 'warn', 'gprod')}
       ${stRow('download', 't3', 'Резервна копія', 'Експорт та імпорт даних', '', 'gbkp')}
     </div>
     <div class="stl">
@@ -1239,6 +1620,81 @@ function bkpPg() {
       <p class="mut pg-sub" style="margin-top:14px">Імпорт замінює всі поточні дані даними з файлу.</p>
     </div>
   </div>`, stBack);
+}
+
+/* ── PRODUCT CATALOG (SETTINGS) ────────────────────────────── */
+function prodRows(q) {
+  q = (q || '').toLowerCase().trim();
+  const prods = (db.products || []).filter(p => !q || p.title.toLowerCase().includes(q) || (p.brand || '').toLowerCase().includes(q));
+  if (!prods.length) {
+    return `<p class="mut" style="text-align:center;margin-top:28px">${q ? 'Нічого не знайдено' : 'Продукції ще немає. Натисніть «+», щоб додати перший засіб.'}</p>`;
+  }
+  return prods.map(p => `
+    <div class="scd pr" data-a="eprod" data-v="${p.id}" style="cursor:pointer">
+      <b>${esc(p.title)}</b>
+      <small>
+        ${p.brand ? esc(p.brand) + ' · ' : ''}${p.vol ? esc(p.vol) + ' · ' : ''}
+        Продаж: <b>${money(p.price)}</b> · Закупка: ${money(p.cost)} · <span class="pl">+${money(p.price - p.cost)}</span>
+      </small>
+    </div>
+  `).join('');
+}
+
+function prodPg() {
+  pgOpen(`<div class="pn pg">
+    ${pgHead('Каталог продукції', `<button type="button" class="ib" data-a="eprod" data-v="" aria-label="Додати засіб">${ic('plus')}</button>`)}
+    <div class="pg-b">
+      <div class="sr" style="margin:10px 0 6px">${ic('search')}<input id="prod_q" autocomplete="off" placeholder="Пошук за назвою чи брендом"></div>
+      <div id="prod_l">${prodRows('')}</div>
+    </div>
+  </div>`, stBack);
+}
+
+function prodSheet(id) {
+  const p = id ? (pr(id) || {}) : { title: '', brand: '', vol: '', cost: '', price: '', note: '' };
+  const quickVols = ['30 мл', '50 мл', '100 мл', '150 мл', '200 мл', '250 мл', '500 мл', '50 г', '100 г'];
+
+  const diff = (+p.price || 0) - (+p.cost || 0);
+  const pct = p.cost > 0 && p.price ? Math.round((diff / p.cost) * 100) : 0;
+
+  pgOpen(`<div class="pn pg">
+    ${pgHead(id ? 'Редагувати засіб' : 'Новий засіб', id ? `<button type="button" class="ib dl" data-a="dprod" data-v="${id}" aria-label="Видалити" title="Видалити">${ic('trash')}</button>` : '')}
+    <div class="pg-b">
+      <div class="fh first">${ic('bag')} Назва продукції</div>
+      <input id="pt" value="${esc(p.title)}" placeholder="Наприклад: Крем для стоп з сечовиною 10%">
+
+      <div class="fh">${ic('work')} Виробник (Бренд)</div>
+      <input id="pb" value="${esc(p.brand || '')}" placeholder="Наприклад: Baehr, Podopharm, SUDA">
+
+      <div class="fh">${ic('file')} Вага чи об’єм</div>
+      <input id="pv" value="${esc(p.vol || '')}" placeholder="Наприклад: 100 мл, 50 г">
+      <div class="vol-chips">
+        ${quickVols.map(v => `<button type="button" class="vol-chip" data-a="vchip" data-v="${v}">${v}</button>`).join('')}
+      </div>
+
+      <div class="fh">${ic('cash')} Ціна закупки (собівартість)</div>
+      <div class="fld"><input id="pc" type="number" inputmode="decimal" min="0" value="${p.cost || ''}" placeholder="0"><em class="sf">₴</em></div>
+
+      <div class="fh">${ic('cash')} Ціна продажу</div>
+      <div class="fld"><input id="pp" type="number" inputmode="decimal" min="0" value="${p.price || ''}" placeholder="0"><em class="sf">₴</em></div>
+
+      <div id="prod-margin-box" class="sal-summary-card" style="margin-top:16px">
+        <div class="ssc-row ssc-main" style="margin-top:0;padding-top:0;border-top:0">
+          <span>Ваш чистий заробіток з 1 шт</span>
+          <b id="pm-diff">+${money(Math.max(0, diff))}</b>
+        </div>
+        <small class="mut" id="pm-pct" style="display:block;margin-top:4px">
+          ${pct ? 'Націнка ' + pct + '%' : ''}
+        </small>
+      </div>
+
+      <div class="fh">${ic('msg')} Примітки</div>
+      <textarea id="pnote" placeholder="Особливості застосування, призначення...">${esc(p.note || '')}</textarea>
+    </div>
+    <div class="pg-f">
+      <button type="button" class="bt" data-a="sprod" data-v="${id || ''}">${ic('check')} Зберегти засіб</button>
+    </div>
+  </div>`, prodPg);
 }
 
 /* ── ACTIONS ────────────────────────────────────────────────── */
@@ -1570,11 +2026,164 @@ const A = {
   },
 
   ds: v => {
-    if (confirm('\u0412\u0438\u0434\u0430\u043b\u0438\u0442\u0438 \u043f\u043e\u0441\u043b\u0443\u0433\u0443?')) {
+    if (confirm('Видалити послугу?')) {
       db.services = db.services.filter(s => s.id != v);
       save();
       svcPg();
     }
+  },
+
+  // ── Продажі ──
+  saltab: v => { S.salTab = v; render(true); },
+  nsal: () => salSheet(''),
+  esal: v => salSheet(v),
+  'pick-sal': v => {
+    const s = (db.sales || []).find(x => x.id == v);
+    if (s) {
+      s.status = 'done';
+      save();
+      toast('Замовлення видано клієнту та перенесено в архів');
+      render(true);
+    }
+  },
+  'undo-sal': v => {
+    const s = (db.sales || []).find(x => x.id == v);
+    if (s) {
+      s.status = 'wait';
+      save();
+      toast('Замовлення повернуто в очікування видачі');
+      render(true);
+    }
+  },
+  'sal-pcl': v => {
+    curSal.cid = v;
+    if ($('#sal-cq')) $('#sal-cq').value = cn(v);
+    if ($('#sal-cw')) $('#sal-cw').classList.add('ok');
+    if ($('#sal-cl-list')) $('#sal-cl-list').innerHTML = '';
+  },
+  'sal-nocl': () => {
+    curSal.cid = '';
+    if ($('#sal-cq')) $('#sal-cq').value = '';
+    if ($('#sal-cw')) $('#sal-cw').classList.remove('ok');
+    if ($('#sal-cl-list')) $('#sal-cl-list').innerHTML = '';
+  },
+  'sal-acl': () => {
+    const n = ($('#sal-cq') ? $('#sal-cq').value : '').trim().replace(/\s+/g, ' ');
+    if (!n) return;
+    const c = { id: uid(), name: n, phone: '', ig: '', note: '' };
+    db.clients.push(c);
+    save();
+    toast('Клієнта додано');
+    A['sal-pcl'](c.id);
+  },
+  'pk-prod': () => pkProdOpen(),
+  'add-it': v => {
+    const p = pr(v);
+    if (!p) return;
+    curSal.items = curSal.items || [];
+    const existing = curSal.items.find(x => x.pid == p.id);
+    if (existing) {
+      existing.qty++;
+    } else {
+      curSal.items.push({
+        pid: p.id,
+        title: p.title,
+        brand: p.brand || '',
+        vol: p.vol || '',
+        cost: +p.cost || 0,
+        price: +p.price || 0,
+        qty: 1
+      });
+    }
+    salCalc();
+    salOpenForm(curSal.id);
+  },
+  'it-qty': v => {
+    const [idx, d] = v.split('|');
+    const item = curSal.items[+idx];
+    if (!item) return;
+    item.qty = Math.max(1, item.qty + +d);
+    salCalc();
+    $('#sal-items-wrap').innerHTML = salItemsHtml();
+    $('#sal-sum-wrap').innerHTML = salSummaryHtml();
+  },
+  'it-del': v => {
+    curSal.items.splice(+v, 1);
+    salCalc();
+    $('#sal-items-wrap').innerHTML = salItemsHtml();
+    $('#sal-sum-wrap').innerHTML = salSummaryHtml();
+  },
+  'sal-st': v => {
+    curSal.status = v;
+    document.querySelectorAll('.sal-status-picks .ssp-btn').forEach(b => {
+      b.classList.toggle('on', b.dataset.v === v);
+    });
+  },
+  ssal: () => {
+    if (!curSal.items.length) { toast('Додайте хоча б один засіб', 'warn'); return; }
+    curSal.date = $('#sal-dt') ? $('#sal-dt').value : curSal.date;
+    curSal.note = $('#sal-note') ? $('#sal-note').value.trim() : '';
+    salCalc();
+    if (curSal.id) {
+      db.sales = db.sales.map(s => s.id == curSal.id ? curSal : s);
+    } else {
+      curSal.id = uid();
+      db.sales = db.sales || [];
+      db.sales.push(curSal);
+    }
+    save();
+    toast(curSal.status == 'wait' ? 'Замовлення збережено (очікує видачі)' : 'Продаж збережено');
+    done();
+  },
+  dsal: v => {
+    if (confirm('Видалити це замовлення?')) {
+      db.sales = (db.sales || []).filter(s => s.id != v);
+      save();
+      done();
+      toast('Замовлення видалено');
+    }
+  },
+  'nsal-cl': v => salSheet('', v, iso(new Date())),
+  'nsal-ap': () => salSheet('', cur ? cur.cid : '', cur ? cur.date : iso(new Date())),
+  'act-sal': v => salSheet('', '', v || S.d),
+
+  // ── Продукція в налаштуваннях ──
+  gprod: () => prodPg(),
+  eprod: v => prodSheet(v),
+  sprod: v => {
+    const title = ($('#pt') ? $('#pt').value : '').trim();
+    if (!title) { toast('Вкажіть назву засобу', 'warn'); return; }
+    const o = {
+      title,
+      brand: ($('#pb') ? $('#pb').value : '').trim(),
+      vol: ($('#pv') ? $('#pv').value : '').trim(),
+      cost: +($('#pc') ? $('#pc').value : 0) || 0,
+      price: +($('#pp') ? $('#pp').value : 0) || 0,
+      note: ($('#pnote') ? $('#pnote').value : '').trim()
+    };
+    db.products = db.products || [];
+    if (v) Object.assign(pr(v), o);
+    else db.products.push({ id: uid(), ...o });
+    save();
+    toast('Засіб збережено у каталозі');
+    prodPg();
+  },
+  dprod: v => {
+    if (confirm('Видалити цей засіб з каталогу?')) {
+      db.products = (db.products || []).filter(p => p.id != v);
+      save();
+      prodPg();
+      toast('Засіб видалено');
+    }
+  },
+  vchip: v => {
+    if ($('#pv')) $('#pv').value = v;
+    const cost = +($('#pc') ? $('#pc').value : 0) || 0;
+    const price = +($('#pp') ? $('#pp').value : 0) || 0;
+    const diff = price - cost;
+    const pct = cost > 0 ? Math.round((diff / cost) * 100) : 0;
+    if ($('#pm-diff')) $('#pm-diff').textContent = (diff >= 0 ? '+' : '') + money(diff);
+    if ($('#pm-pct')) $('#pm-pct').textContent = cost > 0 ? 'Націнка ' + pct + '%' : '';
   },
 };
 
@@ -1585,14 +2194,46 @@ document.addEventListener('click', e => {
 });
 
 document.addEventListener('focusin', e => {
-  if (e.target.id == 'xq') { if (cur.cid) e.target.select(); cql(); }
+  if (e.target.id == 'xq') { if (cur && cur.cid) e.target.select(); cql(); }
+  if (e.target.id == 'sal-cq') { if (curSal && curSal.cid) e.target.select(); salCql(); }
 });
 
 document.addEventListener('input', e => {
   if (e.target.id == 'xq') { cur.cid = ''; $('#xcw').classList.remove('ok'); cql(); return; }
+  if (e.target.id == 'sal-cq') { if (curSal) { curSal.cid = ''; $('#sal-cw').classList.remove('ok'); } salCql(); return; }
   if (e.target.id == 'svq') { $('#svl').innerHTML = svRows(e.target.value); return; }
+  if (e.target.id == 'prod_q') { $('#prod_l').innerHTML = prodRows(e.target.value); return; }
+  if (e.target.id == 'pk_prod_q') { $('#pk_prod_l').innerHTML = pkProdRows(e.target.value); return; }
   if (e.target.id == 'iq') { $('#il').innerHTML = impRows(e.target.value.toLowerCase()); return; }
-  if (e.target.dataset.c == 'q') { S.q = e.target.value; $('#cl').innerHTML = cl(); }
+  if (e.target.dataset.c == 'q') { S.q = e.target.value; $('#cl').innerHTML = cl(); return; }
+  if (e.target.dataset.c == 'sq') {
+    S.sq = e.target.value;
+    const f = S.salTab || 'wait';
+    const q = (S.sq || '').toLowerCase().trim();
+    const allSales = (db.sales || []).slice().sort((a, b) => b.date.localeCompare(a.date));
+    const flt = allSales.filter(s => {
+      if (f == 'wait' && s.status != 'wait') return false;
+      if (f == 'done' && s.status != 'done') return false;
+      if (q) {
+        const cName = cn(s.cid).toLowerCase();
+        const pNames = (s.items || []).map(i => (i.title || '') + ' ' + (i.brand || '')).join(' ').toLowerCase();
+        if (!cName.includes(q) && !pNames.includes(q)) return false;
+      }
+      return true;
+    });
+    const el = $('#sal-list');
+    if (el) el.innerHTML = salListRows(flt, f);
+    return;
+  }
+  if (['pc', 'pp'].includes(e.target.id)) {
+    const cost = +($('#pc') ? $('#pc').value : 0) || 0;
+    const price = +($('#pp') ? $('#pp').value : 0) || 0;
+    const diff = price - cost;
+    const pct = cost > 0 ? Math.round((diff / cost) * 100) : 0;
+    if ($('#pm-diff')) $('#pm-diff').textContent = (diff >= 0 ? '+' : '') + money(diff);
+    if ($('#pm-pct')) $('#pm-pct').textContent = cost > 0 ? 'Націнка ' + pct + '%' : '';
+    return;
+  }
 });
 
 document.addEventListener('change', async e => {
